@@ -2,7 +2,7 @@ import socket
 import threading
 import json
 import datetime
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from flask_socketio import SocketIO
 from pymongo import MongoClient
 
@@ -76,7 +76,7 @@ def escuchar_sensores_udp():
 # --- RUTAS WEB (HTTP) ---
 @app.route('/')
 def index():
-    return "<h1>Servidor EcoMind Activo</h1><p>Escuchando UDP en puerto 5005</p>"
+    return render_template('index.html')
 
 @app.route('/api/historial', methods=['GET'])
 def obtener_historial():
