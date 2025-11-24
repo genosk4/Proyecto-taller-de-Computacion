@@ -88,6 +88,24 @@ def obtener_historial():
         reg['timestamp'] = str(reg['timestamp'])
     return jsonify(registros)
 
+@app.route('/api/movil/data', methods=['POST'])
+def recibir_datos_movil():
+    data = request.json
+    print(f"📱 Dato del móvil recibido: {data}")
+    
+    # Agregar timestamp y guardar
+    data['timestamp'] = datetime.datetime.now()
+    data['origen'] = 'celular_app'
+    
+    col_mediciones.insert_one(data)
+    
+    # Avisar al dashboard web en tiempo real
+    data['_id'] = str(data['_id'])
+    data['timestamp'] = str(data['timestamp'])
+    socketio.emit('nuevo_dato_sensor', data)
+    
+    return jsonify({"status": "recibido"}), 200
+
 # --- INICIO ---
 if __name__ == '__main__':
     # Iniciamos el hilo UDP antes que el servidor web
