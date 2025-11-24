@@ -12,8 +12,8 @@
 #include "Adafruit_VEM7700.h"
 
 // --- CONFIGURACIÓN DE RED ---
-const char* ssid = "TU_WIFI_NOMBRE";
-const char* password = "TU_WIFI_PASSWORD";
+const char* ssid = "WIFI-DCI";
+const char* password = "DComInf_2K24";
 
 // --- CONFIGURACIÓN AWS ---
 const char* udpAddress = "TU_IP_ELASTICA_AWS"; // Ej: "54.20.10.15"
