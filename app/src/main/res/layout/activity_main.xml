@@ -1,92 +1,201 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/swipeRefresh"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="20dp"
-    android:gravity="center_horizontal"
-    android:background="#F5F5F5">
+    android:background="@color/bg_dark">
 
-    <TextView
-        android:text="🌱 EcoMind Control"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        android:textColor="#2E7D32"
-        android:layout_marginBottom="30dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
-
-    <androidx.cardview.widget.CardView
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:elevation="6dp"
-        android:layout_marginBottom="20dp"
-        android:backgroundTint="#FFFFFF">
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
         <LinearLayout
-            android:orientation="vertical"
-            android:padding="20dp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
             <TextView
-                android:text="📡 Datos del Invernadero"
+                android:text="🌱 EcoMind"
+                android:textColor="@color/accent_green"
+                android:textSize="28sp"
                 android:textStyle="bold"
-                android:textSize="16sp"
-                android:layout_marginBottom="10dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
+
             <TextView
-                android:id="@+id/tvTemp"
-                android:text="Esperando datos..."
-                android:textSize="18sp"
-                android:textColor="#455A64"
-                android:layout_marginBottom="15dp"
+                android:text="Monitor de Campo IoT"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp"
+                android:layout_marginBottom="30dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
-            <Button
-                android:id="@+id/btnActualizar"
-                android:text="🔄 Sincronizar"
-                android:backgroundTint="#2196F3"
+
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:baselineAligned="false"
+                android:layout_marginBottom="16dp">
 
-    <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:elevation="6dp">
-        <LinearLayout
-            android:orientation="vertical"
-            android:padding="20dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    app:cardBackgroundColor="@color/card_surface"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="4dp">
+                    <LinearLayout
+                        android:padding="16dp"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+                        <TextView
+                            android:text="🌡️"
+                            android:textSize="24sp"
+                            android:layout_marginBottom="8dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+                        <TextView
+                            android:id="@+id/tvTempVal"
+                            android:text="--"
+                            android:textColor="@color/temp_color"
+                            android:textSize="24sp"
+                            android:textStyle="bold"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+                        <TextView
+                            android:text="°C"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
+                <androidx.cardview.widget.CardView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    app:cardBackgroundColor="@color/card_surface"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="4dp">
+                    <LinearLayout
+                        android:padding="16dp"
+                        android:orientation="vertical"
+                        android:gravity="center"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+                        <TextView
+                            android:text="💧"
+                            android:textSize="24sp"
+                            android:layout_marginBottom="8dp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+                        <TextView
+                            android:id="@+id/tvHumVal"
+                            android:text="--"
+                            android:textColor="@color/hum_color"
+                            android:textSize="24sp"
+                            android:textStyle="bold"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+                        <TextView
+                            android:text="%"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+            </LinearLayout>
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="30dp"
+                app:cardBackgroundColor="@color/card_surface"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp">
+                <LinearLayout
+                    android:padding="16dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                    <TextView
+                        android:text="☀️"
+                        android:textSize="24sp"
+                        android:layout_marginEnd="16dp"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"/>
+                    <LinearLayout
+                        android:orientation="vertical"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+                        <TextView
+                            android:text="Luminosidad"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+                        <TextView
+                            android:id="@+id/tvLuxVal"
+                            android:text="-- Lux"
+                            android:textColor="@color/lux_color"
+                            android:textSize="20sp"
+                            android:textStyle="bold"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+                    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
             <TextView
-                android:text="📝 Reporte Manual"
+                android:text="Reporte Manual"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
                 android:textStyle="bold"
-                android:textSize="16sp"
-                android:layout_marginBottom="10dp"
+                android:layout_marginBottom="12dp"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"/>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Ingrese observación (ej: pH 7.2)">
+                android:hint="Observación (ej. Plagas)"
+                android:textColorHint="@color/text_secondary"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                app:boxStrokeColor="@color/accent_green"
+                app:boxBackgroundColor="@color/card_surface">
+
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etMensaje"
-                    android:inputType="textShortMessage"
+                    android:textColor="@color/text_primary"
+                    android:inputType="textCapSentences"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"/>
             </com.google.android.material.textfield.TextInputLayout>
 
             <Button
                 android:id="@+id/btnEnviar"
-                android:text="📤 Enviar Reporte a AWS"
-                android:backgroundTint="#4CAF50"
-                android:layout_marginTop="15dp"
+                android:text="ENVIAR REPORTE"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:backgroundTint="@color/accent_green"
+                android:textColor="@color/black"
+                android:layout_marginTop="16dp"
+                android:padding="14dp"
+                app:cornerRadius="12dp"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
 
-</LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

@@ -1,10 +1,11 @@
-package com.daniel.invernadero
+package com.daniel.invernadero// <--- TU PAQUETE
 
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.textfield.TextInputEditText
 import com.google.gson.JsonObject
 import kotlinx.coroutines.CoroutineScope
@@ -28,22 +29,30 @@ interface ApiService {
 
 class MainActivity : AppCompatActivity() {
 
-    // ⚠️ REEMPLAZAR CON TU IP ELÁSTICA DE AWS
-    private val BASE_URL = "http://54.XX.XX.XX:5000/"
+    // ⚠️ TU IP DE AWS
+    private val BASE_URL = "http://3.210.134.165:5000/"
 
     private lateinit var api: ApiService
-    private lateinit var tvTemp: TextView
+
+    // UI Elements
+    private lateinit var swipeRefresh: SwipeRefreshLayout
+    private lateinit var tvTempVal: TextView
+    private lateinit var tvHumVal: TextView
+    private lateinit var tvLuxVal: TextView
     private lateinit var etMensaje: TextInputEditText
+    private lateinit var btnEnviar: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         // Vincular Vistas
-        tvTemp = findViewById(R.id.tvTemp)
+        swipeRefresh = findViewById(R.id.swipeRefresh)
+        tvTempVal = findViewById(R.id.tvTempVal)
+        tvHumVal = findViewById(R.id.tvHumVal)
+        tvLuxVal = findViewById(R.id.tvLuxVal)
         etMensaje = findViewById(R.id.etMensaje)
-        val btnActualizar = findViewById<Button>(R.id.btnActualizar)
-        val btnEnviar = findViewById<Button>(R.id.btnEnviar)
+        btnEnviar = findViewById(R.id.btnEnviar)
 
         // Configurar Retrofit
         try {
@@ -53,15 +62,24 @@ class MainActivity : AppCompatActivity() {
                 .build()
             api = retrofit.create(ApiService::class.java)
         } catch (e: Exception) {
-            Toast.makeText(this, "Error config URL", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Error configuración URL", Toast.LENGTH_LONG).show()
         }
 
-        // Listeners
-        btnActualizar.setOnClickListener { cargarDatosServidor() }
+        // 1. Configurar Pull-to-Refresh
+        swipeRefresh.setOnRefreshListener {
+            cargarDatosServidor()
+        }
+
+        // Cargar datos al abrir
+        cargarDatosServidor()
+
+        // 2. Configurar Botón Enviar
         btnEnviar.setOnClickListener { enviarDatosServidor() }
     }
 
     private fun cargarDatosServidor() {
+        swipeRefresh.isRefreshing = true // Mostrar spinner de carga
+
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val historial = api.obtenerHistorial()
@@ -69,21 +87,20 @@ class MainActivity : AppCompatActivity() {
                     if (historial.isNotEmpty()) {
                         val dato = historial[0] // El más reciente
 
-                        // Parseo seguro
-                        val t = if (dato.has("t")) dato.get("t").asString else "--"
-                        val h = if (dato.has("h")) dato.get("h").asString else "--"
-                        val l = if (dato.has("l")) dato.get("l").asString else "--"
+                        // Asignar valores a cada tarjeta
+                        tvTempVal.text = if (dato.has("t")) dato.get("t").asString else "--"
+                        tvHumVal.text = if (dato.has("h")) dato.get("h").asString else "--"
+                        tvLuxVal.text = if (dato.has("l")) "${dato.get("l").asString} Lx" else "--"
 
-                        tvTemp.text = "Temp: $t °C\nHumedad: $h %\nLuz: $l Lux"
-                        Toast.makeText(applicationContext, "Datos recibidos ✅", Toast.LENGTH_SHORT).show()
                     } else {
-                        tvTemp.text = "No hay datos en el servidor"
+                        Toast.makeText(applicationContext, "Sin datos recientes", Toast.LENGTH_SHORT).show()
                     }
+                    swipeRefresh.isRefreshing = false // Ocultar spinner
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    tvTemp.text = "Error de conexión"
-                    Toast.makeText(applicationContext, "Fallo: ${e.message}", Toast.LENGTH_LONG).show()
+                    swipeRefresh.isRefreshing = false
+                    Toast.makeText(applicationContext, "Error de conexión", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -96,23 +113,30 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
+        // Feedback visual (deshabilitar botón)
+        btnEnviar.isEnabled = false
+        btnEnviar.text = "ENVIANDO..."
+
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // Crear JSON Manual
                 val json = JsonObject()
                 json.addProperty("tipo", "reporte_manual")
                 json.addProperty("observacion", mensaje)
-                json.addProperty("usuario", "Operario Android")
+                json.addProperty("usuario", "Android Operario")
 
-                val respuesta = api.enviarReporte(json)
+                api.enviarReporte(json) // Ignoramos respuesta por simplicidad
 
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(applicationContext, "Reporte Enviado 📤", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(applicationContext, "Reporte Enviado", Toast.LENGTH_SHORT).show()
                     etMensaje.text?.clear()
+                    btnEnviar.isEnabled = true
+                    btnEnviar.text = "ENVIAR REPORTE"
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(applicationContext, "Error envío: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(applicationContext, "Falló el envío", Toast.LENGTH_SHORT).show()
+                    btnEnviar.isEnabled = true
+                    btnEnviar.text = "ENVIAR REPORTE"
                 }
             }
         }
