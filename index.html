@@ -3,148 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoMind | Monitor Invernadero</title>
+    <title>EcoMind | Centro de Control</title>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 
     <style>
-        body { background-color: #f4f6f9; }
-        .card { box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: none; }
-        .sensor-value { font-size: 2.5rem; font-weight: bold; color: #2c3e50; }
-        .unit { font-size: 1rem; color: #7f8c8d; }
-        .status-dot { height: 15px; width: 15px; background-color: #bbb; border-radius: 50%; display: inline-block; }
-        .online { background-color: #27ae60; }
+        :root {
+            --bg-dark: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #e0e0e0;
+            --accent-green: #00e676;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at 10% 20%, rgb(20, 30, 48) 0%, rgb(36, 59, 85) 90%);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+
+        /* Efecto Cristal en las Tarjetas */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: transform 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .sensor-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            opacity: 0.8;
+        }
+
+        .sensor-value {
+            font-size: 3rem;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        .unit { font-size: 1.2rem; opacity: 0.6; font-weight: 300; }
+
+        /* Colores específicos */
+        .text-temp { color: #ff6b6b; text-shadow: 0 0 10px rgba(255, 107, 107, 0.3); }
+        .text-hum { color: #4dabf7; text-shadow: 0 0 10px rgba(77, 171, 247, 0.3); }
+        .text-lux { color: #fcc419; text-shadow: 0 0 10px rgba(252, 196, 25, 0.3); }
+
+        /* Status Dot Pulsating */
+        .status-badge {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .dot {
+            height: 10px; width: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .online-dot { background-color: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); animation: pulse 2s infinite; }
+        .offline-dot { background-color: #ff4444; }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 230, 118, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); }
+        }
     </style>
 </head>
 <body>
 
-<div class="container py-4">
-    <header class="pb-3 mb-4 border-bottom">
-        <div class="d-flex align-items-center text-dark text-decoration-none">
-            <span class="fs-4 fw-bold">🌱 EcoMind Dashboard</span>
-            <span class="ms-auto badge bg-secondary" id="connectionStatus">Desconectado</span>
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h2 class="fw-bold mb-0"><i class="fas fa-leaf text-success me-2"></i>EcoMind <span class="fw-light">Dashboard</span></h2>
+            <p class="text-muted mb-0">Monitor de Invernadero Inteligente AWS</p>
         </div>
-    </header>
+        <div class="glass-card status-badge">
+            <span id="statusDot" class="dot offline-dot"></span>
+            <span id="connectionStatus">Desconectado</span>
+        </div>
+    </div>
 
-    <div class="row g-4 mb-5">
+    <div class="row g-4 mb-4">
         <div class="col-md-4">
-            <div class="card p-3 text-center">
-                <h5>Temperatura</h5>
-                <div class="sensor-value"><span id="val_temp">--</span> <span class="unit">°C</span></div>
+            <div class="glass-card p-4 text-center">
+                <i class="fas fa-thermometer-half sensor-icon text-temp"></i>
+                <h5 class="text-muted">Temperatura</h5>
+                <div class="sensor-value text-temp">
+                    <span id="val_temp">--</span><span class="unit">°C</span>
+                </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card p-3 text-center">
-                <h5>Humedad</h5>
-                <div class="sensor-value"><span id="val_hum">--</span> <span class="unit">%</span></div>
+            <div class="glass-card p-4 text-center">
+                <i class="fas fa-tint sensor-icon text-hum"></i>
+                <h5 class="text-muted">Humedad</h5>
+                <div class="sensor-value text-hum">
+                    <span id="val_hum">--</span><span class="unit">%</span>
+                </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card p-3 text-center">
-                <h5>Luz Ambiental</h5>
-                <div class="sensor-value"><span id="val_lux">--</span> <span class="unit">Lux</span></div>
+            <div class="glass-card p-4 text-center">
+                <i class="fas fa-sun sensor-icon text-lux"></i>
+                <h5 class="text-muted">Luz Ambiental</h5>
+                <div class="sensor-value text-lux">
+                    <span id="val_lux">--</span><span class="unit">lx</span>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="row">
         <div class="col-12">
-            <div class="card p-3">
-                <h5>Historial en Tiempo Real</h5>
-                <canvas id="myChart" height="100"></canvas>
-            </div>
-        </div>
-    </div>
-    
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="alert alert-info d-none" id="iaAlert">
-                <strong>🤖 Consejo IA:</strong> <span id="iaMessage">Analizando...</span>
+            <div class="glass-card p-4">
+                <div class="d-flex justify-content-between mb-3">
+                    <h5 class="fw-bold"><i class="fas fa-chart-line me-2"></i>Historial en Tiempo Real</h5>
+                    <small class="text-muted">Actualización: <span id="lastUpdate">--:--:--</span></small>
+                </div>
+                <div style="height: 350px;">
+                    <canvas id="myChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // 1. Conexión al WebSocket del servidor
-    const socket = io();
-
-    // Variables para la gráfica
+    const socket = io(); // Conexión automática
     const ctx = document.getElementById('myChart').getContext('2d');
-    const maxDataPoints = 20; // Mostrar solo los últimos 20 puntos
-    
+
+    // --- CREACIÓN DE GRADIENTES PARA LA GRÁFICA ---
+    let gradientTemp = ctx.createLinearGradient(0, 0, 0, 400);
+    gradientTemp.addColorStop(0, 'rgba(255, 107, 107, 0.5)'); // Rojo transparente arriba
+    gradientTemp.addColorStop(1, 'rgba(255, 107, 107, 0)');   // Transparente abajo
+
+    let gradientHum = ctx.createLinearGradient(0, 0, 0, 400);
+    gradientHum.addColorStop(0, 'rgba(77, 171, 247, 0.5)');   // Azul transparente arriba
+    gradientHum.addColorStop(1, 'rgba(77, 171, 247, 0)');     // Transparente abajo
+
+    // --- CONFIGURACIÓN CHART.JS ---
     const chart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: [],
-            datasets: [{
-                label: 'Temperatura (°C)',
-                borderColor: '#e74c3c',
-                data: [],
-                fill: false
-            }, {
-                label: 'Humedad (%)',
-                borderColor: '#3498db',
-                data: [],
-                fill: false
-            }]
+            datasets: [
+                {
+                    label: 'Temperatura (°C)',
+                    data: [],
+                    borderColor: '#ff6b6b',
+                    backgroundColor: gradientTemp,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#ff6b6b',
+                    pointRadius: 4,
+                    fill: true, // Rellenar área bajo la curva
+                    tension: 0.4 // Curvas suaves
+                },
+                {
+                    label: 'Humedad (%)',
+                    data: [],
+                    borderColor: '#4dabf7',
+                    backgroundColor: gradientHum,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#4dabf7',
+                    pointRadius: 4,
+                    fill: true,
+                    tension: 0.4
+                }
+            ]
         },
         options: {
             responsive: true,
-            animation: { duration: 0 } // Desactivar animación para fluidez real-time
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { labels: { color: '#e0e0e0' } } // Texto leyenda blanco
+            },
+            scales: {
+                x: { 
+                    ticks: { color: '#aaaaaa' },
+                    grid: { display: false } // Ocultar cuadrícula vertical
+                },
+                y: { 
+                    ticks: { color: '#aaaaaa' },
+                    grid: { color: 'rgba(255,255,255,0.05)' } // Cuadrícula horizontal muy sutil
+                }
+            },
+            animation: { duration: 0 } // Desactivar animación para fluidez en tiempo real
         }
     });
 
-    // 2. Eventos de Conexión
+    // --- LÓGICA DE SOCKETS ---
     socket.on('connect', () => {
-        document.getElementById('connectionStatus').textContent = "Conectado 🟢";
-        document.getElementById('connectionStatus').className = "badge bg-success ms-auto";
-        console.log("Conectado al servidor WebSocket");
+        document.getElementById('connectionStatus').textContent = "Sistema Online";
+        document.getElementById('statusDot').className = "dot online-dot";
     });
 
     socket.on('disconnect', () => {
-        document.getElementById('connectionStatus').textContent = "Desconectado 🔴";
-        document.getElementById('connectionStatus').className = "badge bg-danger ms-auto";
+        document.getElementById('connectionStatus').textContent = "Desconectado";
+        document.getElementById('statusDot').className = "dot offline-dot";
     });
 
-    // 3. RECIBIR DATOS EN TIEMPO REAL
-    // Escuchamos el evento 'nuevo_dato_sensor' que emite app.py
     socket.on('nuevo_dato_sensor', (data) => {
-        console.log("Dato recibido:", data);
-
-        // A. Actualizar tarjetas numéricas
+        // Actualizar números
         if (data.t) document.getElementById('val_temp').innerText = data.t;
         if (data.h) document.getElementById('val_hum').innerText = data.h;
         if (data.l) document.getElementById('val_lux').innerText = data.l;
 
-        // B. Actualizar Gráfica
-        const timeLabel = new Date().toLocaleTimeString();
-        
-        // Agregar dato nuevo
-        chart.data.labels.push(timeLabel);
-        chart.data.datasets[0].data.push(data.t);
-        chart.data.datasets[1].data.push(data.h);
+        // Hora actual
+        const now = new Date();
+        const timeLabel = now.toLocaleTimeString();
+        document.getElementById('lastUpdate').innerText = timeLabel;
 
-        // Eliminar dato viejo si hay muchos (efecto ventana deslizante)
-        if (chart.data.labels.length > maxDataPoints) {
-            chart.data.labels.shift();
-            chart.data.datasets[0].data.shift();
-            chart.data.datasets[1].data.shift();
+        // Actualizar Gráfica
+        if (data.t && data.h) {
+            chart.data.labels.push(timeLabel);
+            chart.data.datasets[0].data.push(data.t);
+            chart.data.datasets[1].data.push(data.h);
+
+            // Mantener solo los últimos 15 puntos
+            if (chart.data.labels.length > 15) {
+                chart.data.labels.shift();
+                chart.data.datasets[0].data.shift();
+                chart.data.datasets[1].data.shift();
+            }
+            chart.update();
         }
-
-        chart.update();
     });
-
-    // Cargar historial al inicio (Opcional, llama a tu API)
-    fetch('/api/historial')
-        .then(response => response.json())
-        .then(data => {
-            // Aquí podrías poblar la gráfica con datos antiguos
-            // data.forEach(d => { ... lógica de push ... });
-            // Por simplicidad, empezamos en blanco y llenamos en vivo.
-        });
-
 </script>
 </body>
 </html>

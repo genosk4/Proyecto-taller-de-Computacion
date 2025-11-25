@@ -1,21 +1,25 @@
+# --- IMPORTACIONES ---
 import socket
-import threading
 import json
 import datetime
+# Eliminamos 'threading' nativo y usamos el de la librería
 from flask import Flask, jsonify, request, render_template
-from flask_socketio import SocketIO
-from pymongo import MongoClient
+from flask_socketio import SocketIO, emit
 
 # --- CONFIGURACIÓN ---
-UDP_IP = "0.0.0.0"       # Escuchar en todas las interfaces
-UDP_PORT = 5005          # Puerto definido en AWS Security Group
+UDP_IP = "0.0.0.0"
+UDP_PORT = 5005
 MONGO_URI = 'mongodb://localhost:27017/'
 DB_NAME = 'invernadero_db'
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret_key_segura'
-# cors_allowed_origins="*" permite que tu App Android y Web se conecten sin bloqueos
-socketio = SocketIO(app, cors_allowed_origins="*")
+
+# IMPORTANTE: async_mode='eventlet' (o 'threading' si no tienes eventlet)
+# Esto fuerza a que los mensajes fluyan
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading') 
+
+from pymongo import MongoClient
 
 # --- BASE DE DATOS ---
 try:
@@ -26,93 +30,67 @@ try:
 except Exception as e:
     print(f"❌ Error MongoDB: {e}")
 
-# --- LÓGICA UDP (HILO SEPARADO) ---
+# --- LÓGICA UDP ---
 def escuchar_sensores_udp():
-    """
-    Esta función corre en segundo plano. Escucha paquetes UDP del Rakwireless,
-    los guarda en Mongo y los retransmite por WebSockets.
-    """
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((UDP_IP, UDP_PORT))
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # Evita error de puerto ocupado
+    try:
+        sock.bind((UDP_IP, UDP_PORT))
+    except Exception as e:
+        print(f"⚠️ Puerto ocupado: {e}")
+        return
+
     print(f"📡 Servidor UDP escuchando en el puerto {UDP_PORT}...")
 
     while True:
         try:
-            # Buffer de 1024 bytes es suficiente para texto corto
             data, addr = sock.recvfrom(1024)
             mensaje_raw = data.decode('utf-8')
-            print(f"📥 Dato recibido de {addr}: {mensaje_raw}")
+            print(f"📥 Recibido: {mensaje_raw}") # Log para debug
 
-            # 1. Parseo de datos (Asumiremos formato JSON: {"t":25, "h":60, "l":100})
-            # Si el sensor manda texto plano, aquí haríamos el split.
+            # Parseo
             try:
                 datos_json = json.loads(mensaje_raw)
-            except json.JSONDecodeError:
-                # Fallback por si envías texto plano tipo "25.5,60.2"
-                print("⚠️ No es JSON válido, guardando como raw")
+            except:
                 datos_json = {"raw": mensaje_raw}
 
-            # 2. Agregar Timestamp y IP origen
-            datos_json['timestamp'] = datetime.datetime.now()
-            datos_json['origen_ip'] = addr[0]
+            # Enriquecer dato
+            datos_json['timestamp'] = str(datetime.datetime.now())
+            
+            # Guardar en Mongo (Opcional por ahora si da error)
+            # col_mediciones.insert_one(datos_json)
 
-            # 3. Guardar en MongoDB
-            col_mediciones.insert_one(datos_json)
-
-            # 4. Convertir ObjectId a string para que no falle el WebSocket
-            datos_json['_id'] = str(datos_json['_id'])
-            datos_json['timestamp'] = str(datos_json['timestamp'])
-
-            # 5. REAL-TIME: Enviar a la Web y Móvil conectados
+            # --- LA PARTE MÁGICA ---
+            # socketio.emit envía el dato A TODOS los navegadores conectados
             socketio.emit('nuevo_dato_sensor', datos_json)
             
-            # --- AQUÍ INTEGRARÍAMOS DEEPSEEK LUEGO ---
-            # if datos_json.get('t', 0) > 30:
-            #     consultar_ia(datos_json)
+            # Pequeña pausa para no saturar CPU
+            socketio.sleep(0.01) 
 
         except Exception as e:
-            print(f"Error en loop UDP: {e}")
+            print(f"Error Loop: {e}")
 
-# --- RUTAS WEB (HTTP) ---
+# --- RUTAS ---
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @app.route('/api/historial', methods=['GET'])
 def obtener_historial():
-    # Retorna los últimos 10 registros para llenar las gráficas al abrir la app
-    registros = list(col_mediciones.find().sort('_id', -1).limit(10))
-    # Limpieza de objetos no serializables
-    for reg in registros:
-        reg['_id'] = str(reg['_id'])
-        reg['timestamp'] = str(reg['timestamp'])
-    return jsonify(registros)
+    return jsonify([]) # Placeholder
 
 @app.route('/api/movil/data', methods=['POST'])
 def recibir_datos_movil():
     data = request.json
-    print(f"📱 Dato del móvil recibido: {data}")
-    
-    # Agregar timestamp y guardar
-    data['timestamp'] = datetime.datetime.now()
-    data['origen'] = 'celular_app'
-    
-    col_mediciones.insert_one(data)
-    
-    # Avisar al dashboard web en tiempo real
-    data['_id'] = str(data['_id'])
-    data['timestamp'] = str(data['timestamp'])
-    socketio.emit('nuevo_dato_sensor', data)
-    
-    return jsonify({"status": "recibido"}), 200
+    print(f"📱 Móvil: {data}")
+    socketio.emit('nuevo_dato_sensor', data) # Reenviar a la web
+    return jsonify({"status": "ok"})
 
-# --- INICIO ---
+# --- INICIO CORREGIDO ---
 if __name__ == '__main__':
-    # Iniciamos el hilo UDP antes que el servidor web
-    hilo_udp = threading.Thread(target=escuchar_sensores_udp)
-    hilo_udp.daemon = True # Si se cierra la app, se cierra el hilo
-    hilo_udp.start()
-
-    # Iniciamos Flask con SocketIO
+    # En lugar de threading.Thread, usamos esto:
+    socketio.start_background_task(target=escuchar_sensores_udp)
+    
     print("🚀 Iniciando Servidor Web...")
-    socketio.run(app, host='0.0.0.0', port=5000)
+    # allow_unsafe_werkzeug=True permite correr en entornos de desarrollo sin bloqueo
+    socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
