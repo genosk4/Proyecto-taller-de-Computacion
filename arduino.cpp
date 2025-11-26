@@ -1,76 +1,85 @@
 /**
- * EcoMind IoT Node - Rakwireless (ESP32 Core)
- * Corregido para ArduinoJson v7 y Errores de Compilación
+ * EcoMind IoT Node - Rakwireless (ESP32 Core RAK11200)
+ * Integración Final: WiFi UDP + SHTC3 + VEML7700 (RAK Library)
  */
 
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <Wire.h>
-#include <ArduinoJson.h> // Versión 7.x
+#include <ArduinoJson.h> // Versión 7
 #include "SparkFun_SHTC3.h"
-#include "Adafruit_VEML7700.h"
+#include "Light_VEML7700.h" // La librería que tú probaste y funciona
 
 // --- CONFIGURACIÓN DE RED ---
-const char* ssid = "VTR-3288102";
+const char* ssid = "VTR-3288102 5G";
 const char* password = "g4wZjph6nkwv";
 
 // --- CONFIGURACIÓN AWS ---
-// Asegúrate de que esta sea tu IP ELÁSTICA actual
 const char* udpAddress = "3.210.134.165"; 
 const int udpPort = 5005;
 
 // --- OBJETOS GLOBALES ---
 WiFiUDP udp;
-SHTC3 mySHTC3;               // Sensor RAK1901
-Adafruit_VEML7700 vem = Adafruit_VEML7700(); // Sensor Luz
+SHTC3 mySHTC3;                // Temp y Humedad
+Light_VEML7700 VMEL = Light_VEML7700(); // Sensor de Luz (RAK)
 
-// Intervalo de envío (5 segundos)
+// Intervalo de envío
 unsigned long lastSendTime = 0;
 const int interval = 5000; 
 
-bool sensorLuzActivo = false; // Bandera de seguridad
-
 void setup() {
+  // 1. Iniciar Consola
   Serial.begin(115200);
-  // Esperar un poco a que el monitor serie arranque, pero con timeout
-  // para no bloquear el chip si no está conectado al PC
-  unsigned long startWait = millis();
-  while (!Serial && millis() - startWait < 3000) delay(10); 
+  time_t timeout = millis();
+  while (!Serial) {
+    if ((millis() - timeout) < 2000) delay(100);
+    else break;
+  }
 
-  // 1. Iniciar Sensores I2C
+  Serial.println("\n--- Iniciando EcoMind Node V2 ---");
+
+  // 2. ACTIVAR ENERGÍA DE SENSORES (¡LA CLAVE QUE FALTABA!)
+  // En WisBlock, el pin WB_IO2 alimenta los slots de sensores.
+  pinMode(WB_IO2, OUTPUT);
+  digitalWrite(WB_IO2, HIGH); 
+  delay(300); // Esperar a que la electricidad se estabilice
+
+  // 3. Iniciar I2C y Sensores
   Wire.begin(); 
   
-  Serial.println("\n--- Iniciando EcoMind Node ---");
-  
-  // RAK1901 (SHTC3)
+  // -- RAK1901 (Temp/Hum) --
   if (mySHTC3.begin() != SHTC3_Status_Nominal) {
-    Serial.println("❌ Falló SHTC3 (Temp/Hum). Revisar conexión física.");
+    Serial.println("❌ Falló SHTC3 (Temp/Hum).");
   } else {
     Serial.println("✅ SHTC3 Listo.");
   }
 
-  // VEM7700 (Luz)
-  // Intentamos iniciar. Si falla, el código sigue pero avisando.
-  if (!vem.begin()) {
-  Serial.println("❌ Falló VEML7700 (Luz). Revisar conexión física.");
-  sensorLuzActivo = false; // Marcar como inactivo
-} else {
-  Serial.println("✅ VEML7700 Listo.");
-  vem.setGain(VEML7700_GAIN_1);
-  vem.setIntegrationTime(VEML7700_IT_800MS);
-  sensorLuzActivo = true; // Marcar como activo
-}
-  // 2. Conectar WiFi
+  // -- RAK12010 (Luz) --
+  // Usamos la lógica de tu ejemplo funcional
+  if (!VMEL.begin()) {
+    Serial.println("❌ Sensor de Luz no encontrado (Revisar tornillos).");
+  } else {
+    Serial.println("✅ VEML7700 Listo (Librería RAK).");
+    VMEL.setGain(VEML7700_GAIN_1);
+    VMEL.setIntegrationTime(VEML7700_IT_800MS);
+    
+    // Configuración extra del ejemplo para estabilidad
+    VMEL.setLowThreshold(10000);
+    VMEL.setHighThreshold(20000);
+    VMEL.interruptEnable(false); // No necesitamos interrupciones físicas ahora
+  }
+
+  // 4. Conectar WiFi
   connectWiFi();
 }
 
 void loop() {
-  // Verificar WiFi y reconectar si se cayó
+  // Reconexión automática WiFi
   if (WiFi.status() != WL_CONNECTED) {
     connectWiFi();
   }
 
-  // Enviar datos cada X tiempo
+  // Timer no bloqueante (5 segundos)
   if (millis() - lastSendTime > interval) {
     lastSendTime = millis();
     enviarDatos();
@@ -79,59 +88,57 @@ void loop() {
 
 void enviarDatos() {
   // A. Leer Sensores
-  mySHTC3.update(); // Pedir nueva lectura al hardware
-  
+  mySHTC3.update(); 
   float temp = mySHTC3.toDegC();
   float hum = mySHTC3.toPercent();
-  float lux = 0.0;
+  
+  // Lectura del sensor de luz con la nueva librería
+  float lux = VMEL.readLux();
 
-  if (sensorLuzActivo) {
-   lux = vem.readLux();
-} else {
-   lux = -1.0; // Valor centinela para indicar error en la gráfica
-}
+  // Debug local
+  Serial.print("T:"); Serial.print(temp);
+  Serial.print(" H:"); Serial.print(hum);
+  Serial.print(" L:"); Serial.println(lux);
 
-  // B. Crear JSON (Sintaxis ArduinoJson v7)
-  // Ya no usamos StaticJsonDocument<200>, el sistema ajusta la memoria solo.
+  // B. Crear JSON (ArduinoJson v7)
   JsonDocument doc;
   
-  doc["t"] = ((int)(temp * 100)) / 100.0; // Redondear 2 decimales
+  doc["t"] = ((int)(temp * 100)) / 100.0;
   doc["h"] = ((int)(hum * 100)) / 100.0;
+  
+  // Protección por si el sensor da lecturas raras al inicio
+  if (lux < 0) lux = 0; 
   doc["l"] = lux;
+  
   doc["device_id"] = "rak_nodo_01";
   
-  // Serializar a String
   String jsonString;
   serializeJson(doc, jsonString);
 
   // C. Enviar UDP a AWS
-  Serial.print("📤 Enviando a AWS: ");
-  Serial.println(jsonString);
-
   udp.beginPacket(udpAddress, udpPort);
-  // print() es más seguro que write() para strings en ESP32 UDP
   udp.print(jsonString); 
   udp.endPacket();
+  
+  Serial.println("📤 Enviado a AWS");
 }
 
 void connectWiFi() {
-  Serial.print("Conectando a WiFi: ");
+  Serial.print("Conectando WiFi: ");
   Serial.println(ssid);
-  
   WiFi.begin(ssid, password);
   
   int intentos = 0;
-  while (WiFi.status() != WL_CONNECTED && intentos < 20) {
+  while (WiFi.status() != WL_CONNECTED && intentos < 10) {
     delay(500);
     Serial.print(".");
     intentos++;
   }
-
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("\n✅ WiFi Conectado.");
-    Serial.print("IP Local: ");
+  
+  if(WiFi.status() == WL_CONNECTED) {
+    Serial.println("\n✅ Conectado IP: ");
     Serial.println(WiFi.localIP());
   } else {
-    Serial.println("\n❌ Error conectando WiFi. Reintentando en breve...");
+    Serial.println("\n⚠️ Fallo WiFi (Reintentará en loop)");
   }
 }
