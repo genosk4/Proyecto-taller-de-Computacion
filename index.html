@@ -7,7 +7,7 @@
     
     <!-- Bootstrap 5 Dark -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- FontAwesome (Iconos) -->
+    <!-- FontAwesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -29,11 +29,10 @@
             min-height: 100vh;
         }
 
-        /* Efecto Cristal Oscuro (El Original) */
+        /* Tarjetas de Cristal Oscuro */
         .glass-card {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 15px;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
@@ -45,21 +44,11 @@
             border-color: rgba(255, 255, 255, 0.3);
         }
 
-        .sensor-icon {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            opacity: 0.8;
-        }
-
-        .sensor-value {
-            font-size: 3rem;
-            font-weight: 700;
-            letter-spacing: -1px;
-        }
-
+        .sensor-icon { font-size: 2.5rem; margin-bottom: 10px; opacity: 0.9; }
+        .sensor-value { font-size: 3rem; font-weight: 700; letter-spacing: -1px; }
         .unit { font-size: 1.2rem; color: #aaa; font-weight: 300; }
 
-        /* Colores Neón Específicos */
+        /* Colores Neón */
         .text-temp { color: #ff6b6b; text-shadow: 0 0 15px rgba(255, 107, 107, 0.4); }
         .text-hum { color: #4dabf7; text-shadow: 0 0 15px rgba(77, 171, 247, 0.4); }
         .text-lux { color: #fcc419; text-shadow: 0 0 15px rgba(252, 196, 25, 0.4); }
@@ -93,7 +82,7 @@
     <div class="d-flex justify-content-between align-items-center mb-5">
         <div>
             <h2 class="fw-bold mb-0"><i class="fas fa-leaf text-success me-2"></i>EcoMind <span class="fw-light">Dashboard</span></h2>
-            <p class="text-muted mb-0">Monitor de Invernadero Inteligente AWS</p>
+            <p class="text-muted mb-0">Sistema IoT con IA Contextual</p>
         </div>
         <div class="glass-card status-badge">
             <span id="statusDot" class="dot offline-dot"></span>
@@ -101,23 +90,29 @@
         </div>
     </div>
 
-    <!-- SECCIÓN IA AGRÓNOMO -->
+    <!-- SECCIÓN IA AGRÓNOMO INTERACTIVO -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="glass-card p-4">
-                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div class="d-flex align-items-center mb-3">
+                    <i class="fas fa-robot fa-2x me-3 text-info"></i>
                     <div>
-                        <h5 class="fw-bold text-white m-0"><i class="fas fa-robot me-2 text-info"></i>Asistente DeepSeek</h5>
-                        <p class="text-white-50 mb-0 small">Análisis inteligente de cultivo en tiempo real</p>
+                        <h5 class="fw-bold text-white m-0">Asistente Agrónomo IA</h5>
+                        <p class="text-white-50 mb-0 small">Pregunta cualquier cosa. La IA responderá basándose en los sensores actuales.</p>
                     </div>
-                    <button id="btnIA" class="btn btn-outline-light px-4 py-2 fw-bold" onclick="consultarIA()">
-                        <i class="fas fa-magic me-2"></i>ANALIZAR AHORA
+                </div>
+
+                <!-- Input y Botón -->
+                <div class="input-group mb-3">
+                    <input type="text" id="inputPregunta" class="form-control bg-dark text-white border-secondary" placeholder="Ej: ¿Es buen momento para regar? (Dejar vacío para reporte general)">
+                    <button id="btnIA" class="btn btn-outline-info fw-bold" type="button" onclick="consultarIA()">
+                        <i class="fas fa-paper-plane me-2"></i>CONSULTAR
                     </button>
                 </div>
                 
                 <!-- Caja de Respuesta -->
                 <div id="boxRespuestaIA" class="mt-3 p-3 rounded d-none" style="background: rgba(0, 230, 118, 0.1); border-left: 4px solid #00e676;">
-                    <p class="mb-0 text-white fw-bold" id="txtConsejo">Esperando respuesta...</p>
+                    <p class="mb-0 text-white" id="txtConsejo" style="white-space: pre-wrap;">Esperando respuesta...</p>
                 </div>
             </div>
         </div>
@@ -177,7 +172,7 @@
     const socket = io();
     const ctx = document.getElementById('myChart').getContext('2d');
 
-    // --- GRADIENTES NEÓN (Modo Oscuro Original) ---
+    // Gradientes Neón
     let gradientTemp = ctx.createLinearGradient(0, 0, 0, 400);
     gradientTemp.addColorStop(0, 'rgba(255, 107, 107, 0.5)'); 
     gradientTemp.addColorStop(1, 'rgba(255, 107, 107, 0)');
@@ -197,9 +192,6 @@
                     borderColor: '#ff6b6b',
                     backgroundColor: gradientTemp,
                     borderWidth: 3,
-                    pointBackgroundColor: '#fff',
-                    pointBorderColor: '#ff6b6b',
-                    pointRadius: 4,
                     fill: true,
                     tension: 0.4,
                     yAxisID: 'y'
@@ -210,9 +202,6 @@
                     borderColor: '#4dabf7',
                     backgroundColor: gradientHum,
                     borderWidth: 3,
-                    pointBackgroundColor: '#fff',
-                    pointBorderColor: '#4dabf7',
-                    pointRadius: 4,
                     fill: true,
                     tension: 0.4,
                     yAxisID: 'y'
@@ -222,11 +211,11 @@
                     data: [],
                     borderColor: '#fcc419',
                     borderWidth: 2,
-                    borderDash: [5, 5], // Línea punteada para diferenciar
-                    pointRadius: 0, // Sin puntos para no ensuciar
+                    borderDash: [5, 5], 
+                    pointRadius: 0,
                     fill: false,
                     tension: 0.4,
-                    yAxisID: 'y1' // Eje DERECHO
+                    yAxisID: 'y1' // Eje Derecho
                 }
             ]
         },
@@ -234,7 +223,7 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { labels: { color: '#e0e0e0' } } // Leyenda blanca
+                legend: { labels: { color: '#e0e0e0' } }
             },
             scales: {
                 x: { 
@@ -246,7 +235,7 @@
                     display: true,
                     position: 'left',
                     ticks: { color: '#aaaaaa' },
-                    grid: { color: 'rgba(255,255,255,0.05)' } // Rejilla muy sutil
+                    grid: { color: 'rgba(255,255,255,0.05)' }
                 },
                 y1: {
                     type: 'linear',
@@ -260,7 +249,7 @@
         }
     });
 
-    // --- LÓGICA DE SOCKETS ---
+    // --- Sockets ---
     socket.on('connect', () => {
         document.getElementById('connectionStatus').textContent = "Sistema Online";
         document.getElementById('statusDot').className = "dot online-dot";
@@ -272,24 +261,20 @@
     });
 
     socket.on('nuevo_dato_sensor', (data) => {
-        // Actualizar tarjetas
         if (data.t) document.getElementById('val_temp').innerText = data.t;
         if (data.h) document.getElementById('val_hum').innerText = data.h;
         if (data.l) document.getElementById('val_lux').innerText = data.l;
 
-        // Hora
         const now = new Date();
-        const timeLabel = now.toLocaleTimeString();
-        document.getElementById('lastUpdate').innerText = timeLabel;
+        const timeStr = now.toLocaleTimeString();
+        document.getElementById('lastUpdate').innerText = timeStr;
 
-        // Actualizar Gráfica
         if (data.t !== undefined) {
-            chart.data.labels.push(timeLabel);
+            chart.data.labels.push(timeStr);
             chart.data.datasets[0].data.push(data.t);
             chart.data.datasets[1].data.push(data.h);
             chart.data.datasets[2].data.push(data.l);
 
-            // Mantener últimos 20 puntos
             if (chart.data.labels.length > 20) {
                 chart.data.labels.shift();
                 chart.data.datasets[0].data.shift();
@@ -300,26 +285,40 @@
         }
     });
 
-    // --- FUNCIÓN ASYNC PARA IA (FUNCIONA CON OPENROUTER) ---
+    // --- FUNCIÓN CHATBOT IA ---
     async function consultarIA() {
         const btn = document.getElementById('btnIA');
+        const input = document.getElementById('inputPregunta');
         const box = document.getElementById('boxRespuestaIA');
         const txt = document.getElementById('txtConsejo');
+        
+        const preguntaUsuario = input.value;
 
+        // Estado de carga
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Pensando...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>';
         box.classList.add('d-none');
 
         try {
-            const response = await fetch('/api/ia/consultar', { method: 'POST' });
+            // Enviamos la pregunta en el JSON
+            const response = await fetch('/api/ia/consultar', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pregunta: preguntaUsuario }) 
+            });
+            
             const data = await response.json();
+            
+            // Mostrar respuesta
             box.classList.remove('d-none');
-            txt.innerText = data.consejo;
+            txt.innerText = data.consejo; 
+
         } catch (error) {
             alert("Error consultando IA");
+            console.error(error);
         } finally {
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-magic me-2"></i>ANALIZAR AHORA';
+            btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>CONSULTAR';
         }
     }
 </script>
