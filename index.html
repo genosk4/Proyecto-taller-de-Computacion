@@ -29,7 +29,7 @@
             min-height: 100vh;
         }
 
-        /* Tarjetas de Cristal Oscuro */
+        /* Tarjetas */
         .glass-card {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
@@ -48,12 +48,10 @@
         .sensor-value { font-size: 3rem; font-weight: 700; letter-spacing: -1px; }
         .unit { font-size: 1.2rem; color: #aaa; font-weight: 300; }
 
-        /* Colores Neón */
         .text-temp { color: #ff6b6b; text-shadow: 0 0 15px rgba(255, 107, 107, 0.4); }
         .text-hum { color: #4dabf7; text-shadow: 0 0 15px rgba(77, 171, 247, 0.4); }
         .text-lux { color: #fcc419; text-shadow: 0 0 15px rgba(252, 196, 25, 0.4); }
 
-        /* Status Dot */
         .status-badge {
             padding: 8px 15px;
             border-radius: 20px;
@@ -68,11 +66,17 @@
         .online-dot { background-color: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); animation: pulse 2s infinite; }
         .offline-dot { background-color: #ff4444; }
 
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(0, 230, 118, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(0, 230, 118, 0); }
+        /* Estilo Bitácora */
+        .log-entry {
+            border-left: 3px solid #00e676;
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 0 5px 5px 0;
+            animation: fadeIn 0.5s ease;
         }
+        @keyframes fadeIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+
     </style>
 </head>
 <body>
@@ -90,7 +94,7 @@
         </div>
     </div>
 
-    <!-- SECCIÓN IA AGRÓNOMO INTERACTIVO -->
+    <!-- IA INTERACTIVA -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="glass-card p-4">
@@ -101,16 +105,12 @@
                         <p class="text-white-50 mb-0 small">Pregunta cualquier cosa. La IA responderá basándose en los sensores actuales.</p>
                     </div>
                 </div>
-
-                <!-- Input y Botón -->
                 <div class="input-group mb-3">
-                    <input type="text" id="inputPregunta" class="form-control bg-dark text-white border-secondary" placeholder="Ej: ¿Es buen momento para regar? (Dejar vacío para reporte general)">
+                    <input type="text" id="inputPregunta" class="form-control bg-dark text-white border-secondary" placeholder="Ej: ¿Es buen momento para regar?">
                     <button id="btnIA" class="btn btn-outline-info fw-bold" type="button" onclick="consultarIA()">
                         <i class="fas fa-paper-plane me-2"></i>CONSULTAR
                     </button>
                 </div>
-                
-                <!-- Caja de Respuesta -->
                 <div id="boxRespuestaIA" class="mt-3 p-3 rounded d-none" style="background: rgba(0, 230, 118, 0.1); border-left: 4px solid #00e676;">
                     <p class="mb-0 text-white" id="txtConsejo" style="white-space: pre-wrap;">Esperando respuesta...</p>
                 </div>
@@ -118,50 +118,52 @@
         </div>
     </div>
 
-    <!-- Tarjetas de Sensores -->
+    <!-- TARJETAS SENSORES -->
     <div class="row g-4 mb-4">
-        <!-- Temperatura -->
         <div class="col-md-4">
             <div class="glass-card p-4 text-center">
                 <i class="fas fa-thermometer-half sensor-icon text-temp"></i>
                 <h5 class="text-muted">Temperatura</h5>
-                <div class="sensor-value text-temp">
-                    <span id="val_temp">--</span><span class="unit">°C</span>
-                </div>
+                <div class="sensor-value text-temp"><span id="val_temp">--</span><span class="unit">°C</span></div>
             </div>
         </div>
-        <!-- Humedad -->
         <div class="col-md-4">
             <div class="glass-card p-4 text-center">
                 <i class="fas fa-tint sensor-icon text-hum"></i>
                 <h5 class="text-muted">Humedad</h5>
-                <div class="sensor-value text-hum">
-                    <span id="val_hum">--</span><span class="unit">%</span>
-                </div>
+                <div class="sensor-value text-hum"><span id="val_hum">--</span><span class="unit">%</span></div>
             </div>
         </div>
-        <!-- Luz -->
         <div class="col-md-4">
             <div class="glass-card p-4 text-center">
                 <i class="fas fa-sun sensor-icon text-lux"></i>
                 <h5 class="text-muted">Luminosidad</h5>
-                <div class="sensor-value text-lux">
-                    <span id="val_lux">--</span><span class="unit">lx</span>
-                </div>
+                <div class="sensor-value text-lux"><span id="val_lux">--</span><span class="unit">lx</span></div>
             </div>
         </div>
     </div>
 
-    <!-- Sección de Gráfica -->
-    <div class="row">
-        <div class="col-12">
-            <div class="glass-card p-4">
+    <!-- NUEVA SECCIÓN: BITÁCORA Y GRÁFICA -->
+    <div class="row g-4">
+        <!-- Columna Izquierda: Gráfica -->
+        <div class="col-lg-8">
+            <div class="glass-card p-4 h-100">
                 <div class="d-flex justify-content-between mb-3">
                     <h5 class="fw-bold"><i class="fas fa-chart-line me-2"></i>Historial en Tiempo Real</h5>
-                    <small class="text-muted">Actualización: <span id="lastUpdate">--:--:--</span></small>
+                    <small class="text-muted">Último dato: <span id="lastUpdate">--:--:--</span></small>
                 </div>
-                <div style="height: 350px;">
+                <div style="height: 300px;">
                     <canvas id="myChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Derecha: Bitácora en Vivo -->
+        <div class="col-lg-4">
+            <div class="glass-card p-4 h-100">
+                <h5 class="fw-bold mb-3"><i class="fas fa-clipboard-list me-2 text-warning"></i>Bitácora de Operaciones</h5>
+                <div id="bitacoraContainer" style="height: 300px; overflow-y: auto;">
+                    <div class="text-muted small text-center mt-5">Esperando reportes desde la App...</div>
                 </div>
             </div>
         </div>
@@ -171,12 +173,12 @@
 <script>
     const socket = io();
     const ctx = document.getElementById('myChart').getContext('2d');
+    const bitacoraContainer = document.getElementById('bitacoraContainer');
 
-    // Gradientes Neón
+    // Config Gráfica
     let gradientTemp = ctx.createLinearGradient(0, 0, 0, 400);
     gradientTemp.addColorStop(0, 'rgba(255, 107, 107, 0.5)'); 
     gradientTemp.addColorStop(1, 'rgba(255, 107, 107, 0)');
-
     let gradientHum = ctx.createLinearGradient(0, 0, 0, 400);
     gradientHum.addColorStop(0, 'rgba(77, 171, 247, 0.5)');
     gradientHum.addColorStop(1, 'rgba(77, 171, 247, 0)');
@@ -186,70 +188,23 @@
         data: {
             labels: [],
             datasets: [
-                {
-                    label: 'Temperatura (°C)',
-                    data: [],
-                    borderColor: '#ff6b6b',
-                    backgroundColor: gradientTemp,
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    yAxisID: 'y'
-                },
-                {
-                    label: 'Humedad (%)',
-                    data: [],
-                    borderColor: '#4dabf7',
-                    backgroundColor: gradientHum,
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    yAxisID: 'y'
-                },
-                {
-                    label: 'Luz (Lx)',
-                    data: [],
-                    borderColor: '#fcc419',
-                    borderWidth: 2,
-                    borderDash: [5, 5], 
-                    pointRadius: 0,
-                    fill: false,
-                    tension: 0.4,
-                    yAxisID: 'y1' // Eje Derecho
-                }
+                { label: 'Temperatura', data: [], borderColor: '#ff6b6b', backgroundColor: gradientTemp, fill: true, tension: 0.4, yAxisID: 'y' },
+                { label: 'Humedad', data: [], borderColor: '#4dabf7', backgroundColor: gradientHum, fill: true, tension: 0.4, yAxisID: 'y' },
+                { label: 'Luz', data: [], borderColor: '#fcc419', borderDash: [5, 5], fill: false, tension: 0.4, yAxisID: 'y1' }
             ]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { labels: { color: '#e0e0e0' } }
-            },
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#e0e0e0' } } },
             scales: {
-                x: { 
-                    ticks: { color: '#aaaaaa' },
-                    grid: { display: false }
-                },
-                y: { 
-                    type: 'linear',
-                    display: true,
-                    position: 'left',
-                    ticks: { color: '#aaaaaa' },
-                    grid: { color: 'rgba(255,255,255,0.05)' }
-                },
-                y1: {
-                    type: 'linear',
-                    display: true,
-                    position: 'right',
-                    grid: { drawOnChartArea: false },
-                    ticks: { color: '#fcc419', callback: function(value) { return value + ' Lx'; } }
-                }
-            },
-            animation: { duration: 0 }
+                x: { ticks: { color: '#aaa' }, grid: { display: false } },
+                y: { type: 'linear', position: 'left', ticks: { color: '#aaa' }, grid: { color: '#ffffff10' } },
+                y1: { type: 'linear', position: 'right', grid: { display: false }, ticks: { color: '#fcc419' } }
+            }, animation: false
         }
     });
 
-    // --- Sockets ---
+    // --- SOCKETS ---
     socket.on('connect', () => {
         document.getElementById('connectionStatus').textContent = "Sistema Online";
         document.getElementById('statusDot').className = "dot online-dot";
@@ -260,16 +215,21 @@
         document.getElementById('statusDot').className = "dot offline-dot";
     });
 
+    // ESCUCHAR DATOS
     socket.on('nuevo_dato_sensor', (data) => {
-        if (data.t) document.getElementById('val_temp').innerText = data.t;
-        if (data.h) document.getElementById('val_hum').innerText = data.h;
-        if (data.l) document.getElementById('val_lux').innerText = data.l;
+        // 1. IMPRIMIR EN CONSOLA (¡Lo que pediste!)
+        console.log("📩 Dato Recibido:", data);
 
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString();
-        document.getElementById('lastUpdate').innerText = timeStr;
-
+        // CASO A: Es un dato de SENSORES (tiene temperatura 't')
         if (data.t !== undefined) {
+            document.getElementById('val_temp').innerText = data.t;
+            document.getElementById('val_hum').innerText = data.h;
+            document.getElementById('val_lux').innerText = data.l;
+
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString();
+            document.getElementById('lastUpdate').innerText = timeStr;
+
             chart.data.labels.push(timeStr);
             chart.data.datasets[0].data.push(data.t);
             chart.data.datasets[1].data.push(data.h);
@@ -283,43 +243,49 @@
             }
             chart.update();
         }
+
+        // CASO B: Es un REPORTE MANUAL (tiene 'observacion')
+        if (data.observacion) {
+            console.log("📝 Nueva entrada de bitácora detectada");
+            
+            // Limpiar mensaje de "esperando..." si es el primero
+            if(bitacoraContainer.innerText.includes("Esperando")) bitacoraContainer.innerHTML = "";
+
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            div.innerHTML = `
+                <div class="d-flex justify-content-between">
+                    <strong class="text-white">${data.usuario || 'Operario'}</strong>
+                    <small class="text-muted">${data.timestamp ? data.timestamp.substring(11,19) : 'Ahora'}</small>
+                </div>
+                <div class="text-light mt-1">${data.observacion}</div>
+            `;
+            // Agregar al principio
+            bitacoraContainer.prepend(div);
+        }
     });
 
-    // --- FUNCIÓN CHATBOT IA ---
+    // IA Function
     async function consultarIA() {
         const btn = document.getElementById('btnIA');
         const input = document.getElementById('inputPregunta');
         const box = document.getElementById('boxRespuestaIA');
         const txt = document.getElementById('txtConsejo');
         
-        const preguntaUsuario = input.value;
-
-        // Estado de carga
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>';
+        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
         box.classList.add('d-none');
 
         try {
-            // Enviamos la pregunta en el JSON
-            const response = await fetch('/api/ia/consultar', { 
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pregunta: preguntaUsuario }) 
+            const res = await fetch('/api/ia/consultar', { 
+                method: 'POST', 
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ pregunta: input.value }) 
             });
-            
-            const data = await response.json();
-            
-            // Mostrar respuesta
+            const d = await res.json();
             box.classList.remove('d-none');
-            txt.innerText = data.consejo; 
-
-        } catch (error) {
-            alert("Error consultando IA");
-            console.error(error);
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-paper-plane me-2"></i>CONSULTAR';
-        }
+            txt.innerText = d.consejo;
+        } catch (e) { alert("Error IA"); } 
+        finally { btn.disabled = false; btn.innerHTML = 'CONSULTAR'; }
     }
 </script>
 </body>
