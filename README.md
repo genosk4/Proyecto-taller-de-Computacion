@@ -6,8 +6,15 @@
   ```bash
   cd proyecto_invernadero
   ```
-
-- Crear entorno virtual 
+- Instalar pip y python3
+  ```bash
+  sudo apt update
+  ```
+  ```bash
+  sudo apt install python3 python3-pip -y
+  ```
+  
+- Instalar y Crear entorno virtual 
   ```bash
   sudo apt install python3-venv -y
   ```
@@ -17,24 +24,18 @@
   ```bash
   source venv/bin/activate
   ```
-
-- Instalar pip y python3
-  ```bash
-  sudo apt update
-  ```
-  ```bash
-  sudo apt install python3 python3-pip -y
-  ```
+  
 - Instalar Flask 
   ```bash
   pip3 install Flask 
   ```
+  
 - Librerías necesarias
   ```bash
   pip install flask flask_socketio pymongo requests eventlet
   ```
 
-  # Tutorial de instalacion de MongoDB en el servidor (Recordar hacerlo en el entorno virtual del proyecto)
+# Tutorial de instalacion de MongoDB en el servidor (Recordar hacerlo en el entorno virtual del proyecto)
 
 - **1 mongoDB**:
 
@@ -94,25 +95,19 @@
     sudo systemctl enable mongod
     ```
 
-- 2 Flask-CORS y PyMongo
-  ```bash
-    pip3 install flask-cors pymongo
-  ```
-
-
-
 # Arduino
 
 ## Librerias que deben importarse
 ```bash
 SparkFun SHTC3
-Adafruit VEML7700
+Adafruit VEML7700 (creo que no es necesaria en este proyecto ya que no detecta mi sensor, pero igual la dejo)
 ArduinoJson
-Light_VEML7700 (la versión de RAKwireless VEML Light Sensor)
+RAKwireless VEML Light Sensor
 ```
-- Luego copiamos el codigo del repositorio
+- Luego copiamos el codigo .cpp del repositorio
 
 # Página Web
+- Crear una carpeta llamada templates en la carpeta del proyecto y dentro de esta crear un archivo index.html
 ```bash
 mkdir templates
 ```
