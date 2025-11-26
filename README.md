@@ -37,6 +37,14 @@
   pip install flask flask_socketio pymongo requests eventlet
   ```
 
+- Crear archivo app.py donde se encontrara el codigo para el servidor de nuestro proyecto
+  ```bash
+  nano app.py
+  ```
+  - Dentro pegar el contenido del archivo app.py del repositorio
+
+  
+
 ## Tutorial de instalacion de MongoDB en el servidor (dentro del entorno virtual del proyecto)
 
 - **1 mongoDB**:
@@ -101,22 +109,22 @@
 
 - Librerias que deben importarse:
   
-  1.- Sensor de Temperatura y Humedad
-    ```bash
-    SparkFun SHTC3
-    ```
-  2.- Sensor de Luz
-    ```bash
-    RAKwireless VEML Light Sensor
-    ```
-  3.- Para poder gestionar archivos JSON
-    ```bash
-    ArduinoJson
-    ```
-  4.- Otra librería para el sensor de luz en caso de que la primera de problemas (no debería ser necesaria)
-    ```bash
-    Adafruit VEML7700
-    ```
+   - 1.- Sensor de Temperatura y Humedad
+      ```bash
+      SparkFun SHTC3
+      ```
+   - 2.- Sensor de Luz
+      ```bash
+      RAKwireless VEML Light Sensor
+      ```
+   - 3.- Para poder gestionar archivos JSON
+      ```bash
+      ArduinoJson
+      ```
+   - 4.- Otra librería para el sensor de luz en caso de que la primera de problemas (no debería ser necesaria)
+      ```bash
+      Adafruit VEML7700
+      ```
 - Luego copiamos el codigo .cpp del repositorio
  
 - En caso de que el codigo de error y diga algo relacionao con Python, ejecutar estos comandos en la consola
@@ -129,12 +137,12 @@
     
 ## Página Web (Dentro de AWS)
 - Crear una carpeta llamada templates en la carpeta del proyecto y dentro de esta crear un archivo index.html
-```bash
-mkdir templates
-```
-```bash
-nano templates/index.html
-```
+  ```bash
+  mkdir templates
+  ```
+  ```bash
+  nano templates/index.html
+  ```
 - Luego copiar el codigo del index.html
 
 ## Aplicación movil en Adroid Studio 
