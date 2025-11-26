@@ -1,4 +1,6 @@
-## Crear las carpetas dentro del servidor
+# Indicaciones para crear el proyecto 
+
+## Crear las carpetas dentro del servidor AWS
 - Crear carpeta del proyecto
   ```bash
   mkdir proyecto_invernadero
@@ -35,7 +37,7 @@
   pip install flask flask_socketio pymongo requests eventlet
   ```
 
-## Tutorial de instalacion de MongoDB en el servidor (Recordar hacerlo en el entorno virtual del proyecto)
+## Tutorial de instalacion de MongoDB en el servidor (dentro del entorno virtual del proyecto)
 
 - **1 mongoDB**:
 
@@ -95,7 +97,7 @@
     sudo systemctl enable mongod
     ```
 
-## Arduino
+## Arduino (PC local)
 
 - Librerias que deben importarse:
   
@@ -115,9 +117,17 @@
     ```bash
     Adafruit VEML7700
     ```
-  - Luego copiamos el codigo .cpp del repositorio
-
-## Página Web
+- Luego copiamos el codigo .cpp del repositorio
+ 
+- En caso de que el codigo de error y diga algo relacionao con Python, ejecutar estos comandos en la consola
+  ```bash
+    sudo apt update
+  ```
+  ```bash
+    sudo apt install python-is-python3
+  ```
+    
+## Página Web (Dentro de AWS)
 - Crear una carpeta llamada templates en la carpeta del proyecto y dentro de esta crear un archivo index.html
 ```bash
 mkdir templates
@@ -125,9 +135,9 @@ mkdir templates
 ```bash
 nano templates/index.html
 ```
-- Luego compiar el codigo del index.html
+- Luego copiar el codigo del index.html
 
-## Aplicación movil
+## Aplicación movil en Adroid Studio 
 - Crear un proyecto eligiendo el modelo Empty Views Activity
 - Luego compiar los archivos del repositorio de la rama **Android**
 
