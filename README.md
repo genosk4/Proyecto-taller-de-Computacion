@@ -108,6 +108,7 @@
 SparkFun SHTC3
 Adafruit VEML7700
 ArduinoJson
+Light_VEML7700 (la versión de RAKwireless VEML Light Sensor)
 ```
 - Luego copiamos el codigo del repositorio
 
