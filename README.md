@@ -1,4 +1,4 @@
-# Crear las carpetas dentro del servidor
+## Crear las carpetas dentro del servidor
 - Crear carpeta del proyecto
   ```bash
   mkdir proyecto_invernadero
@@ -35,7 +35,7 @@
   pip install flask flask_socketio pymongo requests eventlet
   ```
 
-# Tutorial de instalacion de MongoDB en el servidor (Recordar hacerlo en el entorno virtual del proyecto)
+## Tutorial de instalacion de MongoDB en el servidor (Recordar hacerlo en el entorno virtual del proyecto)
 
 - **1 mongoDB**:
 
@@ -95,18 +95,29 @@
     sudo systemctl enable mongod
     ```
 
-# Arduino
+## Arduino
 
-## Librerias que deben importarse
-```bash
-SparkFun SHTC3
-Adafruit VEML7700 (creo que no es necesaria en este proyecto ya que no detecta mi sensor, pero igual la dejo)
-ArduinoJson
-RAKwireless VEML Light Sensor
-```
-- Luego copiamos el codigo .cpp del repositorio
+- Librerias que deben importarse:
+  
+  1.- Sensor de Temperatura y Humedad
+    ```bash
+    SparkFun SHTC3
+    ```
+  2.- Sensor de Luz
+    ```bash
+    RAKwireless VEML Light Sensor
+    ```
+  3.- Para poder gestionar archivos JSON
+    ```bash
+    ArduinoJson
+    ```
+  4.- Otra librería para el sensor de luz en caso de que la primera de problemas (no debería ser necesaria)
+    ```bash
+    Adafruit VEML7700
+    ```
+  - Luego copiamos el codigo .cpp del repositorio
 
-# Página Web
+## Página Web
 - Crear una carpeta llamada templates en la carpeta del proyecto y dentro de esta crear un archivo index.html
 ```bash
 mkdir templates
@@ -116,4 +127,7 @@ nano templates/index.html
 ```
 - Luego compiar el codigo del index.html
 
+## Aplicación movil
+- Crear un proyecto eligiendo el modelo Empty Views Activity
+- Luego compiar los archivos del repositorio de la rama **Android**
 
