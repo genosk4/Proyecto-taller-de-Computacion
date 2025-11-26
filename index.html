@@ -17,7 +17,6 @@
     <style>
         :root {
             --bg-dark: #121212;
-            --card-bg: #1e1e1e;
             --text-main: #e0e0e0;
             --accent-green: #00e676;
         }
@@ -30,7 +29,7 @@
             min-height: 100vh;
         }
 
-        /* Efecto Cristal Oscuro */
+        /* Efecto Cristal Oscuro (El Original) */
         .glass-card {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
@@ -74,6 +73,7 @@
             align-items: center;
             gap: 8px;
             background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
         }
         .dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; }
         .online-dot { background-color: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); animation: pulse 2s infinite; }
@@ -93,11 +93,33 @@
     <div class="d-flex justify-content-between align-items-center mb-5">
         <div>
             <h2 class="fw-bold mb-0"><i class="fas fa-leaf text-success me-2"></i>EcoMind <span class="fw-light">Dashboard</span></h2>
-            <p class="text-light mb-0">Monitor de Invernadero Inteligente AWS</p>
+            <p class="text-muted mb-0">Monitor de Invernadero Inteligente AWS</p>
         </div>
         <div class="glass-card status-badge">
             <span id="statusDot" class="dot offline-dot"></span>
             <span id="connectionStatus">Desconectado</span>
+        </div>
+    </div>
+
+    <!-- SECCIÓN IA AGRÓNOMO -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="glass-card p-4">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <div>
+                        <h5 class="fw-bold text-white m-0"><i class="fas fa-robot me-2 text-info"></i>Asistente DeepSeek</h5>
+                        <p class="text-white-50 mb-0 small">Análisis inteligente de cultivo en tiempo real</p>
+                    </div>
+                    <button id="btnIA" class="btn btn-outline-light px-4 py-2 fw-bold" onclick="consultarIA()">
+                        <i class="fas fa-magic me-2"></i>ANALIZAR AHORA
+                    </button>
+                </div>
+                
+                <!-- Caja de Respuesta -->
+                <div id="boxRespuestaIA" class="mt-3 p-3 rounded d-none" style="background: rgba(0, 230, 118, 0.1); border-left: 4px solid #00e676;">
+                    <p class="mb-0 text-white fw-bold" id="txtConsejo">Esperando respuesta...</p>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -155,7 +177,7 @@
     const socket = io();
     const ctx = document.getElementById('myChart').getContext('2d');
 
-    // --- GRADIENTES NEÓN ---
+    // --- GRADIENTES NEÓN (Modo Oscuro Original) ---
     let gradientTemp = ctx.createLinearGradient(0, 0, 0, 400);
     gradientTemp.addColorStop(0, 'rgba(255, 107, 107, 0.5)'); 
     gradientTemp.addColorStop(1, 'rgba(255, 107, 107, 0)');
@@ -277,6 +299,29 @@
             chart.update();
         }
     });
+
+    // --- FUNCIÓN ASYNC PARA IA (FUNCIONA CON OPENROUTER) ---
+    async function consultarIA() {
+        const btn = document.getElementById('btnIA');
+        const box = document.getElementById('boxRespuestaIA');
+        const txt = document.getElementById('txtConsejo');
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Pensando...';
+        box.classList.add('d-none');
+
+        try {
+            const response = await fetch('/api/ia/consultar', { method: 'POST' });
+            const data = await response.json();
+            box.classList.remove('d-none');
+            txt.innerText = data.consejo;
+        } catch (error) {
+            alert("Error consultando IA");
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-magic me-2"></i>ANALIZAR AHORA';
+        }
+    }
 </script>
 </body>
 </html>
