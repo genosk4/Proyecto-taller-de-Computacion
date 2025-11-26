@@ -1,6 +1,7 @@
-package com.daniel.invernadero // <--- NO OLVIDES TU PAQUETE
+package com.daniel.invernadero // <--- ⚠️ IMPORTANTE: MANTÉN TU PAQUETE
 
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -8,7 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.textfield.TextInputEditText
 import com.google.gson.JsonObject
-import kotlinx.coroutines.* // Importante para el ciclo automático
+import kotlinx.coroutines.*
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
@@ -16,32 +17,44 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Query
 
-// --- INTERFAZ API ---
+// --- INTERFAZ API CON CHATBOT ---
 interface ApiService {
-    // Agregamos @Query("z") para enviar un número basura que rompa el caché
     @GET("/api/historial")
     suspend fun obtenerHistorial(@Query("z") aleatorio: Long): List<JsonObject>
 
     @POST("/api/movil/data")
     suspend fun enviarReporte(@Body datos: JsonObject): JsonObject
+
+    // Nueva ruta para la IA
+    @POST("/api/ia/consultar")
+    suspend fun consultarIA(@Body datos: JsonObject): JsonObject
 }
 
 class MainActivity : AppCompatActivity() {
 
-    // ⚠️ REVISA TU IP
-    private val BASE_URL = "http://3.210.134.165:5000/"
+    // ⚠️ TU IP DE AWS (Asegúrate que sea la correcta)
+    private val BASE_URL = "http://52.22.205.161:5000/"
 
     private lateinit var api: ApiService
+
+    // UI Elements
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var tvTempVal: TextView
     private lateinit var tvHumVal: TextView
     private lateinit var tvLuxVal: TextView
+
+    // Sección IA
+    private lateinit var etPreguntaIA: TextInputEditText
+    private lateinit var btnConsultarIA: Button
+    private lateinit var tvRespuestaIA: TextView
+
+    // Sección Reporte
     private lateinit var etMensaje: TextInputEditText
     private lateinit var btnEnviar: Button
 
-    // Control del Auto-Update
+    // Auto-Update
     private var jobActualizacion: Job? = null
-    private val INTERVALO_UPDATE = 5000L // 5 segundos
+    private val INTERVALO_UPDATE = 5000L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,6 +65,11 @@ class MainActivity : AppCompatActivity() {
         tvTempVal = findViewById(R.id.tvTempVal)
         tvHumVal = findViewById(R.id.tvHumVal)
         tvLuxVal = findViewById(R.id.tvLuxVal)
+
+        etPreguntaIA = findViewById(R.id.etPreguntaIA)
+        btnConsultarIA = findViewById(R.id.btnConsultarIA)
+        tvRespuestaIA = findViewById(R.id.tvRespuestaIA)
+
         etMensaje = findViewById(R.id.etMensaje)
         btnEnviar = findViewById(R.id.btnEnviar)
 
@@ -66,39 +84,70 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Error URL", Toast.LENGTH_SHORT).show()
         }
 
-        // Listener manual (por si acaso)
-        swipeRefresh.setOnRefreshListener {
-            cargarDatosUnaVez()
+        // Listeners
+        swipeRefresh.setOnRefreshListener { cargarDatosUnaVez() }
+        btnEnviar.setOnClickListener { enviarReporteManual() }
+
+        // --- NUEVO LISTENER BOTÓN IA ---
+        btnConsultarIA.setOnClickListener {
+            val pregunta = etPreguntaIA.text.toString()
+            consultarAgronomoIA(pregunta)
         }
-
-        // Configurar botón enviar
-        btnEnviar.setOnClickListener { enviarDatosServidor() }
     }
-
-    // --- CICLO DE VIDA (MAGIA AUTOMÁTICA) ---
 
     override fun onResume() {
         super.onResume()
-        startAutoUpdate() // Empezar a actualizar cuando abres la app
+        startAutoUpdate()
     }
 
     override fun onPause() {
         super.onPause()
-        stopAutoUpdate() // Dejar de actualizar si sales (ahorra batería/datos)
+        stopAutoUpdate()
     }
 
+    // --- LÓGICA CHATBOT IA ---
+    private fun consultarAgronomoIA(pregunta: String) {
+        // Bloquear UI para evitar doble click
+        btnConsultarIA.isEnabled = false
+        btnConsultarIA.text = "ANALIZANDO..."
+        tvRespuestaIA.visibility = View.GONE
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // Crear JSON {"pregunta": "..."}
+                val json = JsonObject()
+                json.addProperty("pregunta", pregunta) // Si va vacío, el servidor dará reporte general
+
+                val respuesta = api.consultarIA(json)
+
+                withContext(Dispatchers.Main) {
+                    if (respuesta.has("consejo")) {
+                        tvRespuestaIA.text = "🤖 " + respuesta.get("consejo").asString
+                        tvRespuestaIA.visibility = View.VISIBLE
+                    } else {
+                        Toast.makeText(applicationContext, "Sin respuesta de IA", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(applicationContext, "Error IA: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            } finally {
+                withContext(Dispatchers.Main) {
+                    btnConsultarIA.isEnabled = true
+                    btnConsultarIA.text = "ANALIZAR CONTEXTO"
+                }
+            }
+        }
+    }
+
+    // --- LÓGICA DE ACTUALIZACIÓN SENSORES ---
     private fun startAutoUpdate() {
         jobActualizacion?.cancel()
-
         jobActualizacion = CoroutineScope(Dispatchers.IO).launch {
             while (isActive) {
-                // Log para debug (Míralo en Logcat de Android Studio)
-                android.util.Log.d("EcoMind", "Pidiendo datos nuevos...")
-
                 cargarDatosBackground()
-
-                // Espera 3 segundos (un poco más rápido para pruebas)
-                delay(3000L)
+                delay(INTERVALO_UPDATE)
             }
         }
     }
@@ -107,21 +156,13 @@ class MainActivity : AppCompatActivity() {
         jobActualizacion?.cancel()
     }
 
-    // --- FUNCIONES DE CARGA ---
-
     private suspend fun cargarDatosBackground() {
         try {
             val historial = api.obtenerHistorial(System.currentTimeMillis())
             withContext(Dispatchers.Main) {
-                if (historial.isNotEmpty()) {
-                    val dato = historial[0]
-                    actualizarUI(dato)
-                }
+                if (historial.isNotEmpty()) actualizarUI(historial[0])
             }
-        } catch (e: Exception) {
-            // En modo automático fallamos en silencio para no llenar de Toasts
-            e.printStackTrace()
-        }
+        } catch (e: Exception) { }
     }
 
     private fun cargarDatosUnaVez() {
@@ -132,19 +173,14 @@ class MainActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     if (historial.isNotEmpty()) actualizarUI(historial[0])
                     swipeRefresh.isRefreshing = false
-                    Toast.makeText(applicationContext, "Actualizado", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    swipeRefresh.isRefreshing = false
-                    Toast.makeText(applicationContext, "Error conexión", Toast.LENGTH_SHORT).show()
-                }
+                withContext(Dispatchers.Main) { swipeRefresh.isRefreshing = false }
             }
         }
     }
 
     private fun actualizarUI(dato: JsonObject) {
-        // Extraer valores con seguridad
         val t = if (dato.has("t")) dato.get("t").asString else "--"
         val h = if (dato.has("h")) dato.get("h").asString else "--"
         val l = if (dato.has("l")) dato.get("l").asString else "--"
@@ -152,25 +188,9 @@ class MainActivity : AppCompatActivity() {
         tvTempVal.text = t
         tvHumVal.text = h
         tvLuxVal.text = "$l Lx"
-
-        // --- AGREGAMOS FEEDBACK VISUAL ---
-        // Usamos el timestamp del servidor si existe, o la hora actual del celular
-        val horaServidor = if (dato.has("timestamp")) {
-            // Intentamos limpiar el formato de fecha feo de Python
-            dato.get("timestamp").asString.substring(11, 19) // Toma solo HH:MM:SS
-        } else {
-            // Hora local si no viene del server
-            android.text.format.DateFormat.format("HH:mm:ss", java.util.Date())
-        }
-
-        // Un pequeño Toast (mensaje flotante) discreto para confirmar recepción
-        // Opcional: Si te molesta que salga cada 5 seg, comenta esta línea
-        //Toast.makeText(applicationContext, "Recibido: $horaServidor", Toast.LENGTH_SHORT).show()
     }
 
-    // ... (Mantén tu función enviarDatosServidor igual) ...
-    private fun enviarDatosServidor() {
-        // ... (Tu código de enviar anterior) ...
+    private fun enviarReporteManual() {
         val mensaje = etMensaje.text.toString()
         if (mensaje.isEmpty()) return
 
@@ -182,7 +202,7 @@ class MainActivity : AppCompatActivity() {
                 json.addProperty("usuario", "Android")
                 api.enviarReporte(json)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(applicationContext, "Enviado", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(applicationContext, "Reporte Enviado", Toast.LENGTH_SHORT).show()
                     etMensaje.text?.clear()
                 }
             } catch (e: Exception) { }
