@@ -7,11 +7,11 @@
 #include "Light_VEML7700.h" 
 
 // --- CONFIGURACIÓN DE RED ---
-const char* ssid = "VTR-3288102 5G";
+const char* ssid = "VTR-3288102";
 const char* password = "g4wZjph6nkwv";
 
 // --- CONFIGURACIÓN AWS ---
-const char* udpAddress = "3.210.134.165"; 
+const char* udpAddress = "Ip_elastica"; 
 const int udpPort = 5005;
 
 // --- OBJETOS GLOBALES ---
