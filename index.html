@@ -3,154 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgroSense | Centro de Control</title>
+    <title>AgroSense | Nature UI</title>
     
-    <!-- Bootstrap 5 Dark -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- FontAwesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- Chart.js -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Socket.IO -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 
     <style>
         :root {
-            --bg-dark: #121212;
-            --text-main: #e0e0e0;
-            --accent-green: #00e676;
+            --bg-body: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-main: #2d3436;
+            --text-muted: #636e72;
+            --accent-primary: #00b894; /* Verde Menta */
+            --accent-secondary: #0984e3; /* Azul profesional */
+            --shadow-soft: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
         }
 
         body {
-            background-color: var(--bg-dark);
-            background-image: radial-gradient(circle at 10% 20%, rgb(20, 30, 48) 0%, rgb(36, 59, 85) 90%);
+            background-color: var(--bg-body);
             color: var(--text-main);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Poppins', sans-serif;
             min-height: 100vh;
+            padding-bottom: 50px;
         }
 
-        /* Tarjetas */
-        .glass-card {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-            transition: transform 0.3s ease;
-        }
+        /* Títulos */
+        h2, h5 { letter-spacing: -0.5px; }
 
-        .glass-card:hover {
-            transform: translateY(-5px);
-            border-color: rgba(255, 255, 255, 0.3);
-        }
-
-        .sensor-icon { font-size: 2.5rem; margin-bottom: 10px; opacity: 0.9; }
-        .sensor-value { font-size: 3rem; font-weight: 700; letter-spacing: -1px; }
-        .unit { font-size: 1.2rem; color: #aaa; font-weight: 300; }
-
-        .text-temp { color: #ff6b6b; text-shadow: 0 0 15px rgba(255, 107, 107, 0.4); }
-        .text-hum { color: #4dabf7; text-shadow: 0 0 15px rgba(77, 171, 247, 0.4); }
-        .text-lux { color: #fcc419; text-shadow: 0 0 15px rgba(252, 196, 25, 0.4); }
-
-        .status-badge {
-            padding: 8px 15px;
+        /* Tarjetas Estilo "Clean" */
+        .clean-card {
+            background: var(--card-bg);
+            border: none;
             border-radius: 20px;
-            font-weight: bold;
+            box-shadow: var(--shadow-soft);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow: hidden; /* Para contener bordes */
+            height: 100%;
+        }
+
+        .clean-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Sensores */
+        .sensor-icon { 
+            font-size: 2rem; 
+            margin-bottom: 15px; 
+            padding: 15px;
+            border-radius: 15px;
+            display: inline-block;
+        }
+        
+        .sensor-value { font-size: 2.8rem; font-weight: 700; color: var(--text-main); }
+        .unit { font-size: 1rem; color: var(--text-muted); font-weight: 500; margin-left: 5px;}
+
+        /* Colores específicos por sensor (Fondos suaves) */
+        .bg-icon-temp { background-color: rgba(255, 118, 117, 0.1); color: #ff7675; }
+        .bg-icon-hum { background-color: rgba(116, 185, 255, 0.1); color: #74b9ff; }
+        .bg-icon-lux { background-color: rgba(253, 203, 110, 0.1); color: #fdcb6e; }
+
+        /* Header Status */
+        .status-badge {
+            background: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: var(--shadow-soft);
             display: flex;
             align-items: center;
-            gap: 8px;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.1);
+            gap: 10px;
+            color: var(--text-muted);
         }
-        .dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; }
-        .online-dot { background-color: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); animation: pulse 2s infinite; }
-        .offline-dot { background-color: #ff4444; }
+        .dot { height: 8px; width: 8px; border-radius: 50%; }
+        .online-dot { background-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(0, 184, 148, 0.2); }
+        .offline-dot { background-color: #d63031; }
 
-        /* Estilo Bitácora */
+        /* Bitácora */
         .log-entry {
-            border-left: 3px solid #00e676;
-            background: rgba(255,255,255,0.05);
-            padding: 10px;
-            margin-bottom: 8px;
-            border-radius: 0 5px 5px 0;
-            animation: fadeIn 0.5s ease;
+            border-left: 4px solid var(--accent-primary);
+            background: #f8f9fa;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 0 8px 8px 0;
+            animation: slideIn 0.3s ease-out;
         }
-        @keyframes fadeIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+        .log-entry strong { color: var(--text-main); }
+        .log-entry small { color: #b2bec3; }
+        
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+
+        /* Input IA */
+        .input-ia-custom {
+            border: 2px solid #dfe6e9;
+            border-radius: 12px;
+            padding: 10px 15px;
+            background: #fdfdfd;
+        }
+        .input-ia-custom:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(0, 184, 148, 0.1);
+        }
+        
+        /* Botón Custom */
+        .btn-eco {
+            background-color: var(--accent-primary);
+            color: white;
+            border-radius: 12px;
+            border: none;
+            padding: 0 25px;
+            font-weight: 600;
+        }
+        .btn-eco:hover { background-color: #00a383; color: white; }
 
     </style>
 </head>
 <body>
 
 <div class="container py-5">
-    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-5">
         <div>
-            <h2 class="fw-bold mb-0"><i class="fas fa-leaf text-success me-2"></i>EcoMind <span class="fw-light">Dashboard</span></h2>
-            <p class="text-muted mb-0">Sistema IoT con IA Contextual</p>
+            <h2 class="fw-bold mb-0 text-dark">
+                <!-- CAMBIO DE NOMBRE AQUÍ -->
+                <i class="fas fa-seedling me-2" style="color: var(--accent-primary);"></i>AgroSense
+            </h2>
+            <p class="text-muted mb-0 ms-1">Panel de Control Inteligente</p>
         </div>
-        <div class="glass-card status-badge">
+        <div class="status-badge">
             <span id="statusDot" class="dot offline-dot"></span>
             <span id="connectionStatus">Desconectado</span>
         </div>
     </div>
 
-    <!-- IA INTERACTIVA -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="glass-card p-4">
+            <div class="clean-card p-4">
                 <div class="d-flex align-items-center mb-3">
-                    <i class="fas fa-robot fa-2x me-3 text-info"></i>
+                    <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+                        <i class="fas fa-robot text-primary fa-lg"></i>
+                    </div>
                     <div>
-                        <h5 class="fw-bold text-white m-0">Asistente Agrónomo IA</h5>
-                        <p class="text-white-50 mb-0 small">Pregunta cualquier cosa. La IA responderá basándose en los sensores actuales.</p>
+                        <h5 class="fw-bold m-0">Asistente IA</h5>
+                        <p class="text-muted mb-0 small">Analizando datos del cultivo en tiempo real</p>
                     </div>
                 </div>
                 <div class="input-group mb-3">
-                    <input type="text" id="inputPregunta" class="form-control bg-dark text-white border-secondary" placeholder="Ej: ¿Es buen momento para regar?">
-                    <button id="btnIA" class="btn btn-outline-info fw-bold" type="button" onclick="consultarIA()">
-                        <i class="fas fa-paper-plane me-2"></i>CONSULTAR
+                    <input type="text" id="inputPregunta" class="form-control input-ia-custom" placeholder="Ej: ¿Qué tal está la humedad hoy?">
+                    <button id="btnIA" class="btn btn-eco" type="button" onclick="consultarIA()">
+                        <i class="fas fa-magic me-2"></i>PREGUNTAR
                     </button>
                 </div>
-                <div id="boxRespuestaIA" class="mt-3 p-3 rounded d-none" style="background: rgba(0, 230, 118, 0.1); border-left: 4px solid #00e676;">
-                    <p class="mb-0 text-white" id="txtConsejo" style="white-space: pre-wrap;">Esperando respuesta...</p>
+                <div id="boxRespuestaIA" class="mt-3 p-3 rounded d-none" style="background: #e3f9f5; border-left: 4px solid var(--accent-primary);">
+                    <p class="mb-0 text-dark" id="txtConsejo" style="white-space: pre-wrap;">...</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- TARJETAS SENSORES -->
     <div class="row g-4 mb-4">
         <div class="col-md-4">
-            <div class="glass-card p-4 text-center">
-                <i class="fas fa-thermometer-half sensor-icon text-temp"></i>
-                <h5 class="text-muted">Temperatura</h5>
-                <div class="sensor-value text-temp"><span id="val_temp">--</span><span class="unit">°C</span></div>
+            <div class="clean-card p-4 text-center position-relative">
+                <div class="sensor-icon bg-icon-temp"><i class="fas fa-temperature-high"></i></div>
+                <h6 class="text-muted text-uppercase small fw-bold">Temperatura</h6>
+                <div class="sensor-value"><span id="val_temp">--</span><span class="unit">°C</span></div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="glass-card p-4 text-center">
-                <i class="fas fa-tint sensor-icon text-hum"></i>
-                <h5 class="text-muted">Humedad</h5>
-                <div class="sensor-value text-hum"><span id="val_hum">--</span><span class="unit">%</span></div>
+            <div class="clean-card p-4 text-center">
+                <div class="sensor-icon bg-icon-hum"><i class="fas fa-tint"></i></div>
+                <h6 class="text-muted text-uppercase small fw-bold">Humedad</h6>
+                <div class="sensor-value"><span id="val_hum">--</span><span class="unit">%</span></div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="glass-card p-4 text-center">
-                <i class="fas fa-sun sensor-icon text-lux"></i>
-                <h5 class="text-muted">Luminosidad</h5>
-                <div class="sensor-value text-lux"><span id="val_lux">--</span><span class="unit">lx</span></div>
+            <div class="clean-card p-4 text-center">
+                <div class="sensor-icon bg-icon-lux"><i class="fas fa-sun"></i></div>
+                <h6 class="text-muted text-uppercase small fw-bold">Luminosidad</h6>
+                <div class="sensor-value"><span id="val_lux">--</span><span class="unit">lx</span></div>
             </div>
         </div>
     </div>
 
-    <!-- NUEVA SECCIÓN: BITÁCORA Y GRÁFICA -->
     <div class="row g-4">
-        <!-- Columna Izquierda: Gráfica -->
         <div class="col-lg-8">
-            <div class="glass-card p-4 h-100">
-                <div class="d-flex justify-content-between mb-3">
-                    <h5 class="fw-bold"><i class="fas fa-chart-line me-2"></i>Historial en Tiempo Real</h5>
-                    <small class="text-muted">Último dato: <span id="lastUpdate">--:--:--</span></small>
+            <div class="clean-card p-4">
+                <div class="d-flex justify-content-between mb-4 align-items-center">
+                    <h5 class="fw-bold m-0"><i class="fas fa-chart-area me-2 text-muted"></i>Tendencias</h5>
+                    <span class="badge bg-light text-dark border">Último: <span id="lastUpdate">--:--:--</span></span>
                 </div>
                 <div style="height: 300px;">
                     <canvas id="myChart"></canvas>
@@ -158,12 +202,13 @@
             </div>
         </div>
 
-        <!-- Columna Derecha: Bitácora en Vivo -->
         <div class="col-lg-4">
-            <div class="glass-card p-4 h-100">
-                <h5 class="fw-bold mb-3"><i class="fas fa-clipboard-list me-2 text-warning"></i>Bitácora de Operaciones</h5>
-                <div id="bitacoraContainer" style="height: 300px; overflow-y: auto;">
-                    <div class="text-muted small text-center mt-5">Esperando reportes desde la App...</div>
+            <div class="clean-card p-4">
+                <h5 class="fw-bold mb-4"><i class="fas fa-history me-2 text-muted"></i>Bitácora</h5>
+                <div id="bitacoraContainer" style="height: 300px; overflow-y: auto; padding-right: 5px;">
+                    <div class="text-muted small text-center mt-5 bg-light p-3 rounded">
+                        <i class="fas fa-wifi mb-2"></i><br>Esperando datos...
+                    </div>
                 </div>
             </div>
         </div>
@@ -175,38 +220,82 @@
     const ctx = document.getElementById('myChart').getContext('2d');
     const bitacoraContainer = document.getElementById('bitacoraContainer');
 
-    // Config Gráfica
+    // AJUSTE DE COLORES PARA MODO CLARO (Light Mode Chart)
     let gradientTemp = ctx.createLinearGradient(0, 0, 0, 400);
-    gradientTemp.addColorStop(0, 'rgba(255, 107, 107, 0.5)'); 
-    gradientTemp.addColorStop(1, 'rgba(255, 107, 107, 0)');
+    gradientTemp.addColorStop(0, 'rgba(255, 118, 117, 0.5)'); 
+    gradientTemp.addColorStop(1, 'rgba(255, 118, 117, 0)');
+    
     let gradientHum = ctx.createLinearGradient(0, 0, 0, 400);
-    gradientHum.addColorStop(0, 'rgba(77, 171, 247, 0.5)');
-    gradientHum.addColorStop(1, 'rgba(77, 171, 247, 0)');
+    gradientHum.addColorStop(0, 'rgba(116, 185, 255, 0.5)');
+    gradientHum.addColorStop(1, 'rgba(116, 185, 255, 0)');
 
     const chart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: [],
             datasets: [
-                { label: 'Temperatura', data: [], borderColor: '#ff6b6b', backgroundColor: gradientTemp, fill: true, tension: 0.4, yAxisID: 'y' },
-                { label: 'Humedad', data: [], borderColor: '#4dabf7', backgroundColor: gradientHum, fill: true, tension: 0.4, yAxisID: 'y' },
-                { label: 'Luz', data: [], borderColor: '#fcc419', borderDash: [5, 5], fill: false, tension: 0.4, yAxisID: 'y1' }
+                { 
+                    label: 'Temp (°C)', 
+                    data: [], 
+                    borderColor: '#ff7675', // Rojo suave
+                    backgroundColor: gradientTemp, 
+                    fill: true, 
+                    tension: 0.4, 
+                    yAxisID: 'y',
+                    pointRadius: 0,
+                    pointHoverRadius: 6
+                },
+                { 
+                    label: 'Hum (%)', 
+                    data: [], 
+                    borderColor: '#74b9ff', // Azul suave
+                    backgroundColor: gradientHum, 
+                    fill: true, 
+                    tension: 0.4, 
+                    yAxisID: 'y',
+                    pointRadius: 0,
+                    pointHoverRadius: 6
+                },
+                { 
+                    label: 'Luz (lx)', 
+                    data: [], 
+                    borderColor: '#fdcb6e', // Amarillo
+                    borderDash: [5, 5], 
+                    fill: false, 
+                    tension: 0.4, 
+                    yAxisID: 'y1',
+                    pointRadius: 0
+                }
             ]
         },
         options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { legend: { labels: { color: '#e0e0e0' } } },
+            responsive: true, 
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { 
+                legend: { labels: { color: '#636e72', font: {family: 'Poppins'} } },
+                tooltip: { backgroundColor: 'rgba(255,255,255,0.9)', titleColor: '#333', bodyColor: '#333', borderColor: '#ddd', borderWidth: 1 }
+            },
             scales: {
-                x: { ticks: { color: '#aaa' }, grid: { display: false } },
-                y: { type: 'linear', position: 'left', ticks: { color: '#aaa' }, grid: { color: '#ffffff10' } },
-                y1: { type: 'linear', position: 'right', grid: { display: false }, ticks: { color: '#fcc419' } }
-            }, animation: false
+                x: { ticks: { color: '#b2bec3' }, grid: { display: false } },
+                y: { 
+                    type: 'linear', position: 'left', 
+                    ticks: { color: '#b2bec3' }, 
+                    grid: { color: '#f0f0f0', borderDash: [5, 5] } 
+                },
+                y1: { 
+                    type: 'linear', position: 'right', 
+                    grid: { display: false }, 
+                    ticks: { color: '#fdcb6e' } 
+                }
+            }, 
+            animation: false
         }
     });
 
-    // --- SOCKETS ---
+    // --- SOCKETS (LÓGICA INTACTA) ---
     socket.on('connect', () => {
-        document.getElementById('connectionStatus').textContent = "Sistema Online";
+        document.getElementById('connectionStatus').textContent = "Conectado";
         document.getElementById('statusDot').className = "dot online-dot";
     });
 
@@ -215,19 +304,16 @@
         document.getElementById('statusDot').className = "dot offline-dot";
     });
 
-    // ESCUCHAR DATOS
     socket.on('nuevo_dato_sensor', (data) => {
-        // 1. IMPRIMIR EN CONSOLA (¡Lo que pediste!)
         console.log("📩 Dato Recibido:", data);
 
-        // CASO A: Es un dato de SENSORES (tiene temperatura 't')
         if (data.t !== undefined) {
             document.getElementById('val_temp').innerText = data.t;
             document.getElementById('val_hum').innerText = data.h;
             document.getElementById('val_lux').innerText = data.l;
 
             const now = new Date();
-            const timeStr = now.toLocaleTimeString();
+            const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
             document.getElementById('lastUpdate').innerText = timeStr;
 
             chart.data.labels.push(timeStr);
@@ -244,28 +330,23 @@
             chart.update();
         }
 
-        // CASO B: Es un REPORTE MANUAL (tiene 'observacion')
         if (data.observacion) {
-            console.log("📝 Nueva entrada de bitácora detectada");
-            
-            // Limpiar mensaje de "esperando..." si es el primero
             if(bitacoraContainer.innerText.includes("Esperando")) bitacoraContainer.innerHTML = "";
 
             const div = document.createElement('div');
             div.className = 'log-entry';
             div.innerHTML = `
                 <div class="d-flex justify-content-between">
-                    <strong class="text-white">${data.usuario || 'Operario'}</strong>
-                    <small class="text-muted">${data.timestamp ? data.timestamp.substring(11,19) : 'Ahora'}</small>
+                    <strong style="color: #2d3436;">${data.usuario || 'Operario'}</strong>
+                    <small>${data.timestamp ? data.timestamp.substring(11,19) : 'Ahora'}</small>
                 </div>
-                <div class="text-light mt-1">${data.observacion}</div>
+                <div class="mt-1" style="color: #636e72;">${data.observacion}</div>
             `;
-            // Agregar al principio
             bitacoraContainer.prepend(div);
         }
     });
 
-    // IA Function
+    // IA Function (Sin cambios de lógica, solo IDs)
     async function consultarIA() {
         const btn = document.getElementById('btnIA');
         const input = document.getElementById('inputPregunta');
@@ -284,8 +365,8 @@
             const d = await res.json();
             box.classList.remove('d-none');
             txt.innerText = d.consejo;
-        } catch (e) { alert("Error IA"); } 
-        finally { btn.disabled = false; btn.innerHTML = 'CONSULTAR'; }
+        } catch (e) { alert("Error al consultar IA"); } 
+        finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-magic me-2"></i>PREGUNTAR'; }
     }
 </script>
 </body>
