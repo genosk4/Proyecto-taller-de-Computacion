@@ -1,14 +1,10 @@
-/**
- * EcoMind IoT Node - Rakwireless (ESP32 Core RAK11200)
- * Integración Final: WiFi UDP + SHTC3 + VEML7700 (RAK Library)
- */
 
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <Wire.h>
-#include <ArduinoJson.h> // Versión 7
+#include <ArduinoJson.h> 
 #include "SparkFun_SHTC3.h"
-#include "Light_VEML7700.h" // La librería que tú probaste y funciona
+#include "Light_VEML7700.h" 
 
 // --- CONFIGURACIÓN DE RED ---
 const char* ssid = "VTR-3288102 5G";
@@ -20,15 +16,15 @@ const int udpPort = 5005;
 
 // --- OBJETOS GLOBALES ---
 WiFiUDP udp;
-SHTC3 mySHTC3;                // Temp y Humedad
-Light_VEML7700 VMEL = Light_VEML7700(); // Sensor de Luz (RAK)
+SHTC3 mySHTC3;             
+Light_VEML7700 VMEL = Light_VEML7700(); 
 
 // Intervalo de envío
 unsigned long lastSendTime = 0;
 const int interval = 5000; 
 
 void setup() {
-  // 1. Iniciar Consola
+  
   Serial.begin(115200);
   time_t timeout = millis();
   while (!Serial) {
@@ -38,35 +34,34 @@ void setup() {
 
   Serial.println("\n--- Iniciando EcoMind Node V2 ---");
 
-  // 2. ACTIVAR ENERGÍA DE SENSORES (¡LA CLAVE QUE FALTABA!)
-  // En WisBlock, el pin WB_IO2 alimenta los slots de sensores.
+
   pinMode(WB_IO2, OUTPUT);
   digitalWrite(WB_IO2, HIGH); 
-  delay(300); // Esperar a que la electricidad se estabilice
+  delay(300); 
 
   // 3. Iniciar I2C y Sensores
   Wire.begin(); 
   
   // -- RAK1901 (Temp/Hum) --
   if (mySHTC3.begin() != SHTC3_Status_Nominal) {
-    Serial.println("❌ Falló SHTC3 (Temp/Hum).");
+    Serial.println("Falló SHTC3 (Temp/Hum).");
   } else {
-    Serial.println("✅ SHTC3 Listo.");
+    Serial.println("SHTC3 Listo.");
   }
 
   // -- RAK12010 (Luz) --
-  // Usamos la lógica de tu ejemplo funcional
+  
   if (!VMEL.begin()) {
-    Serial.println("❌ Sensor de Luz no encontrado (Revisar tornillos).");
+    Serial.println("Sensor de Luz no encontrado (Revisar tornillos).");
   } else {
-    Serial.println("✅ VEML7700 Listo (Librería RAK).");
+    Serial.println("VEML7700 Listo (Librería RAK).");
     VMEL.setGain(VEML7700_GAIN_1);
     VMEL.setIntegrationTime(VEML7700_IT_800MS);
     
-    // Configuración extra del ejemplo para estabilidad
+  
     VMEL.setLowThreshold(10000);
     VMEL.setHighThreshold(20000);
-    VMEL.interruptEnable(false); // No necesitamos interrupciones físicas ahora
+    VMEL.interruptEnable(false); 
   }
 
   // 4. Conectar WiFi
@@ -100,7 +95,7 @@ void enviarDatos() {
   Serial.print(" H:"); Serial.print(hum);
   Serial.print(" L:"); Serial.println(lux);
 
-  // B. Crear JSON (ArduinoJson v7)
+  // B. Crear JSON 
   JsonDocument doc;
   
   doc["t"] = ((int)(temp * 100)) / 100.0;
@@ -120,7 +115,7 @@ void enviarDatos() {
   udp.print(jsonString); 
   udp.endPacket();
   
-  Serial.println("📤 Enviado a AWS");
+  Serial.println("Enviado a AWS");
 }
 
 void connectWiFi() {
@@ -136,9 +131,9 @@ void connectWiFi() {
   }
   
   if(WiFi.status() == WL_CONNECTED) {
-    Serial.println("\n✅ Conectado IP: ");
+    Serial.println("\nConectado IP: ");
     Serial.println(WiFi.localIP());
   } else {
-    Serial.println("\n⚠️ Fallo WiFi (Reintentará en loop)");
+    Serial.println("\nFallo WiFi (Reintentará en loop)");
   }
 }
