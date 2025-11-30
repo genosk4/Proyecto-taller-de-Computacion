@@ -8,12 +8,12 @@ from flask_socketio import SocketIO, emit
 from pymongo import MongoClient
 
 # --- CONFIGURACIÓN GENERAL ---
-UDP_IP = "0.0.0.0"       # Escuchar todo el tráfico entrante
-UDP_PORT = 5005          # Puerto del Rakwireless
+UDP_IP = "0.0.0.0"      
+UDP_PORT = 5005         
 MONGO_URI = 'mongodb://localhost:27017/'
 DB_NAME = 'invernadero_db'
 
-# --- CONFIGURACIÓN IA (OPENROUTER) ---
+# --- CONFIGURACIÓN IA ---
 # Leemos la clave del sistema operativo para seguridad
 API_KEY = os.environ.get('OPENROUTER_API_KEY') 
 URL_API_IA = "https://openrouter.ai/api/v1/chat/completions"
@@ -28,9 +28,9 @@ try:
     db = client[DB_NAME]
     col_mediciones = db['mediciones_iot']
     col_ia = db['historial_ia']
-    print("✅ MongoDB Conectado")
+    print("MongoDB Conectado")
 except Exception as e:
-    print(f"❌ Error Mongo: {e}")
+    print(f"Error Mongo: {e}")
 
 # --- CEREBRO IA: DEEPSEEK CONTEXTUAL ---
 def consultar_deepseek(t, h, l, pregunta_usuario=None):
@@ -39,11 +39,11 @@ def consultar_deepseek(t, h, l, pregunta_usuario=None):
     Si no, da un reporte general.
     """
     if not API_KEY:
-        return "⚠️ Error: Falta configurar OPENROUTER_API_KEY en Linux."
+        return "Error: Falta configurar OPENROUTER_API_KEY en Linux."
 
     prompt_system = "Eres un ingeniero agrónomo experto en invernaderos automatizados y IoT."
     
-    # Construcción inteligente del Prompt
+    
     if pregunta_usuario and pregunta_usuario.strip() != "":
         # MODO CHATBOT: Responde la duda específica del usuario
         prompt_user = f"""
@@ -69,7 +69,7 @@ def consultar_deepseek(t, h, l, pregunta_usuario=None):
     }
     
     payload = {
-        "model": "deepseek/deepseek-chat", # Modelo económico y potente
+        "model": "deepseek/deepseek-chat", 
         "messages": [
             {"role": "system", "content": prompt_system},
             {"role": "user", "content": prompt_user}
@@ -79,7 +79,7 @@ def consultar_deepseek(t, h, l, pregunta_usuario=None):
     }
 
     try:
-        print(f"🤖 Consultando IA (Modo: {'Chat' if pregunta_usuario else 'Reporte'})...")
+        print(f"Consultando IA (Modo: {'Chat' if pregunta_usuario else 'Reporte'})...")
         response = requests.post(URL_API_IA, headers=headers, json=payload, timeout=15)
         
         if response.status_code == 200:
@@ -126,10 +126,10 @@ def trigger_ia():
         h = ultimo.get('h', 0)
         l = ultimo.get('l', 0)
 
-        # 3. Consultar IA
+        
         consejo = consultar_deepseek(t, h, l, pregunta)
         
-        # 4. Auditoría
+        
         col_ia.insert_one({
             "fecha": str(datetime.datetime.now()),
             "inputs": {"t": t, "h": h, "l": l},
@@ -174,7 +174,7 @@ def escuchar_sensores_udp():
             d_json['origen_ip'] = addr[0]
             
             col_mediciones.insert_one(d_json)
-            # CORRECCIÓN CRÍTICA OBJECTID
+           
             d_json['_id'] = str(d_json['_id'])
             
             socketio.emit('nuevo_dato_sensor', d_json)
