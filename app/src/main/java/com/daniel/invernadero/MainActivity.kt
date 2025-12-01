@@ -1,4 +1,4 @@
-package com.daniel.invernadero // <--- ⚠️ IMPORTANTE: MANTÉN TU PAQUETE
+package com.daniel.invernadero 
 
 import android.os.Bundle
 import android.view.View
@@ -32,8 +32,8 @@ interface ApiService {
 
 class MainActivity : AppCompatActivity() {
 
-    // ⚠️ TU IP DE AWS (Asegúrate que sea la correcta)
-    private val BASE_URL = "http://52.22.205.161:5000/"
+    // TU IP DE AWS
+    private val BASE_URL = "http://IP_elastica:5000/"
 
     private lateinit var api: ApiService
 
