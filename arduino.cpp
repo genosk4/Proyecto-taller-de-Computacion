@@ -7,8 +7,8 @@
 #include "Light_VEML7700.h" 
 
 // --- CONFIGURACIÓN DE RED ---
-const char* ssid = "VTR-3288102";
-const char* password = "g4wZjph6nkwv";
+const char* ssid = "NOMBRE_WIFI";
+const char* password = "PASSWORD";
 
 // --- CONFIGURACIÓN AWS ---
 const char* udpAddress = "Ip_elastica"; 
