@@ -18,8 +18,8 @@
             --card-bg: #ffffff;
             --text-main: #2d3436;
             --text-muted: #636e72;
-            --accent-primary: #00b894; /* Verde Menta */
-            --accent-secondary: #0984e3; /* Azul profesional */
+            --accent-primary: #00b894;
+            --accent-secondary: #0984e3;
             --shadow-soft: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
         }
 
@@ -31,26 +31,17 @@
             padding-bottom: 50px;
         }
 
-        /* Títulos */
         h2, h5 { letter-spacing: -0.5px; }
 
-        /* Tarjetas Estilo "Clean" */
         .clean-card {
             background: var(--card-bg);
             border: none;
             border-radius: 20px;
             box-shadow: var(--shadow-soft);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            overflow: hidden; /* Para contener bordes */
+            overflow: hidden;
             height: 100%;
         }
 
-        .clean-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-
-        /* Sensores */
         .sensor-icon { 
             font-size: 2rem; 
             margin-bottom: 15px; 
@@ -62,12 +53,10 @@
         .sensor-value { font-size: 2.8rem; font-weight: 700; color: var(--text-main); }
         .unit { font-size: 1rem; color: var(--text-muted); font-weight: 500; margin-left: 5px;}
 
-        /* Colores específicos por sensor (Fondos suaves) */
         .bg-icon-temp { background-color: rgba(255, 118, 117, 0.1); color: #ff7675; }
         .bg-icon-hum { background-color: rgba(116, 185, 255, 0.1); color: #74b9ff; }
         .bg-icon-lux { background-color: rgba(253, 203, 110, 0.1); color: #fdcb6e; }
 
-        /* Header Status */
         .status-badge {
             background: white;
             padding: 8px 20px;
@@ -84,7 +73,6 @@
         .online-dot { background-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(0, 184, 148, 0.2); }
         .offline-dot { background-color: #d63031; }
 
-        /* Bitácora */
         .log-entry {
             border-left: 4px solid var(--accent-primary);
             background: #f8f9fa;
@@ -93,24 +81,16 @@
             border-radius: 0 8px 8px 0;
             animation: slideIn 0.3s ease-out;
         }
-        .log-entry strong { color: var(--text-main); }
-        .log-entry small { color: #b2bec3; }
         
         @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
 
-        /* Input IA */
         .input-ia-custom {
             border: 2px solid #dfe6e9;
             border-radius: 12px;
             padding: 10px 15px;
             background: #fdfdfd;
         }
-        .input-ia-custom:focus {
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 0 3px rgba(0, 184, 148, 0.1);
-        }
         
-        /* Botón Custom */
         .btn-eco {
             background-color: var(--accent-primary);
             color: white;
@@ -121,6 +101,10 @@
         }
         .btn-eco:hover { background-color: #00a383; color: white; }
 
+        /* Estilo Tabla Auditoria */
+        .table-custom th { border-top: none; color: var(--text-muted); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; }
+        .table-custom td { vertical-align: middle; }
+
     </style>
 </head>
 <body>
@@ -129,10 +113,9 @@
     <div class="d-flex justify-content-between align-items-center mb-5">
         <div>
             <h2 class="fw-bold mb-0 text-dark">
-                <!-- CAMBIO DE NOMBRE AQUÍ -->
                 <i class="fas fa-seedling me-2" style="color: var(--accent-primary);"></i>AgroSense
             </h2>
-            <p class="text-muted mb-0 ms-1">Panel de Control Inteligente</p>
+            <p class="text-muted mb-0 ms-1">Panel de Ingeniería (Web)</p>
         </div>
         <div class="status-badge">
             <span id="statusDot" class="dot offline-dot"></span>
@@ -148,14 +131,14 @@
                         <i class="fas fa-robot text-primary fa-lg"></i>
                     </div>
                     <div>
-                        <h5 class="fw-bold m-0">Asistente IA</h5>
-                        <p class="text-muted mb-0 small">Analizando datos del cultivo en tiempo real</p>
+                        <h5 class="fw-bold m-0">Ingeniero IA</h5>
+                        <p class="text-muted mb-0 small">Análisis técnico profundo y tendencias</p>
                     </div>
                 </div>
                 <div class="input-group mb-3">
-                    <input type="text" id="inputPregunta" class="form-control input-ia-custom" placeholder="Ej: ¿Qué tal está la humedad hoy?">
+                    <input type="text" id="inputPregunta" class="form-control input-ia-custom" placeholder="Ej: Analiza la estabilidad térmica de la última hora">
                     <button id="btnIA" class="btn btn-eco" type="button" onclick="consultarIA()">
-                        <i class="fas fa-magic me-2"></i>PREGUNTAR
+                        <i class="fas fa-magic me-2"></i>ANALIZAR
                     </button>
                 </div>
                 <div id="boxRespuestaIA" class="mt-3 p-3 rounded d-none" style="background: #e3f9f5; border-left: 4px solid var(--accent-primary);">
@@ -189,7 +172,7 @@
         </div>
     </div>
 
-    <div class="row g-4">
+    <div class="row g-4 mb-4">
         <div class="col-lg-8">
             <div class="clean-card p-4">
                 <div class="d-flex justify-content-between mb-4 align-items-center">
@@ -204,11 +187,34 @@
 
         <div class="col-lg-4">
             <div class="clean-card p-4">
-                <h5 class="fw-bold mb-4"><i class="fas fa-history me-2 text-muted"></i>Bitácora</h5>
+                <h5 class="fw-bold mb-4"><i class="fas fa-history me-2 text-muted"></i>Bitácora en Vivo</h5>
                 <div id="bitacoraContainer" style="height: 300px; overflow-y: auto; padding-right: 5px;">
                     <div class="text-muted small text-center mt-5 bg-light p-3 rounded">
-                        <i class="fas fa-wifi mb-2"></i><br>Esperando datos...
+                        <i class="fas fa-wifi mb-2"></i><br>Esperando reportes...
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NUEVA SECCION: AUDITORIA DE BITACORA -->
+    <div class="row">
+        <div class="col-12">
+            <div class="clean-card p-4">
+                <h5 class="fw-bold mb-3"><i class="fas fa-table me-2 text-muted"></i>Auditoría de Reportes (Historial Completo)</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover table-custom" id="tablaAuditoria">
+                        <thead>
+                            <tr>
+                                <th>Fecha/Hora</th>
+                                <th>Usuario</th>
+                                <th>Observación</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Se llena con JS -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -219,8 +225,9 @@
     const socket = io();
     const ctx = document.getElementById('myChart').getContext('2d');
     const bitacoraContainer = document.getElementById('bitacoraContainer');
+    const tablaAuditoriaBody = document.querySelector('#tablaAuditoria tbody');
 
-    // AJUSTE DE COLORES PARA MODO CLARO (Light Mode Chart)
+    // Config Grafica
     let gradientTemp = ctx.createLinearGradient(0, 0, 0, 400);
     gradientTemp.addColorStop(0, 'rgba(255, 118, 117, 0.5)'); 
     gradientTemp.addColorStop(1, 'rgba(255, 118, 117, 0)');
@@ -234,66 +241,41 @@
         data: {
             labels: [],
             datasets: [
-                { 
-                    label: 'Temp (°C)', 
-                    data: [], 
-                    borderColor: '#ff7675', // Rojo suave
-                    backgroundColor: gradientTemp, 
-                    fill: true, 
-                    tension: 0.4, 
-                    yAxisID: 'y',
-                    pointRadius: 0,
-                    pointHoverRadius: 6
-                },
-                { 
-                    label: 'Hum (%)', 
-                    data: [], 
-                    borderColor: '#74b9ff', // Azul suave
-                    backgroundColor: gradientHum, 
-                    fill: true, 
-                    tension: 0.4, 
-                    yAxisID: 'y',
-                    pointRadius: 0,
-                    pointHoverRadius: 6
-                },
-                { 
-                    label: 'Luz (lx)', 
-                    data: [], 
-                    borderColor: '#fdcb6e', // Amarillo
-                    borderDash: [5, 5], 
-                    fill: false, 
-                    tension: 0.4, 
-                    yAxisID: 'y1',
-                    pointRadius: 0
-                }
+                { label: 'Temp', data: [], borderColor: '#ff7675', backgroundColor: gradientTemp, fill: true, tension: 0.4, yAxisID: 'y', pointRadius: 0 },
+                { label: 'Hum', data: [], borderColor: '#74b9ff', backgroundColor: gradientHum, fill: true, tension: 0.4, yAxisID: 'y', pointRadius: 0 },
+                { label: 'Luz', data: [], borderColor: '#fdcb6e', borderDash: [5, 5], fill: false, tension: 0.4, yAxisID: 'y1', pointRadius: 0 }
             ]
         },
         options: {
-            responsive: true, 
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: { 
-                legend: { labels: { color: '#636e72', font: {family: 'Poppins'} } },
-                tooltip: { backgroundColor: 'rgba(255,255,255,0.9)', titleColor: '#333', bodyColor: '#333', borderColor: '#ddd', borderWidth: 1 }
-            },
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: '#636e72', font: {family: 'Poppins'} } } },
             scales: {
                 x: { ticks: { color: '#b2bec3' }, grid: { display: false } },
-                y: { 
-                    type: 'linear', position: 'left', 
-                    ticks: { color: '#b2bec3' }, 
-                    grid: { color: '#f0f0f0', borderDash: [5, 5] } 
-                },
-                y1: { 
-                    type: 'linear', position: 'right', 
-                    grid: { display: false }, 
-                    ticks: { color: '#fdcb6e' } 
-                }
-            }, 
-            animation: false
+                y: { type: 'linear', position: 'left', ticks: { color: '#b2bec3' }, grid: { color: '#f0f0f0', borderDash: [5, 5] } },
+                y1: { type: 'linear', position: 'right', grid: { display: false }, ticks: { color: '#fdcb6e' } }
+            }, animation: false
         }
     });
 
-    // --- SOCKETS (LÓGICA INTACTA) ---
+    // Cargar historial de auditoria al iniciar
+    async function cargarAuditoria() {
+        try {
+            const res = await fetch('/api/bitacora');
+            const data = await res.json();
+            tablaAuditoriaBody.innerHTML = '';
+            data.forEach(item => {
+                const fila = `<tr>
+                    <td>${item.timestamp ? item.timestamp.substring(0,19) : ''}</td>
+                    <td><span class="badge bg-secondary">${item.usuario || 'App'}</span></td>
+                    <td>${item.observacion}</td>
+                </tr>`;
+                tablaAuditoriaBody.innerHTML += fila;
+            });
+        } catch(e) { console.error("Error cargando auditoria"); }
+    }
+    cargarAuditoria();
+
+    // Sockets
     socket.on('connect', () => {
         document.getElementById('connectionStatus').textContent = "Conectado";
         document.getElementById('statusDot').className = "dot online-dot";
@@ -305,8 +287,7 @@
     });
 
     socket.on('nuevo_dato_sensor', (data) => {
-        console.log("📩 Dato Recibido:", data);
-
+        // Si es sensor
         if (data.t !== undefined) {
             document.getElementById('val_temp').innerText = data.t;
             document.getElementById('val_hum').innerText = data.h;
@@ -330,9 +311,10 @@
             chart.update();
         }
 
+        // Si es bitacora
         if (data.observacion) {
+            // Actualizar widget lateral
             if(bitacoraContainer.innerText.includes("Esperando")) bitacoraContainer.innerHTML = "";
-
             const div = document.createElement('div');
             div.className = 'log-entry';
             div.innerHTML = `
@@ -343,10 +325,12 @@
                 <div class="mt-1" style="color: #636e72;">${data.observacion}</div>
             `;
             bitacoraContainer.prepend(div);
+
+            // Actualizar tabla inferior tambien
+            cargarAuditoria();
         }
     });
 
-    // IA Function (Sin cambios de lógica, solo IDs)
     async function consultarIA() {
         const btn = document.getElementById('btnIA');
         const input = document.getElementById('inputPregunta');
@@ -360,14 +344,27 @@
             const res = await fetch('/api/ia/consultar', { 
                 method: 'POST', 
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ pregunta: input.value }) 
+                body: JSON.stringify({ 
+                    pregunta: input.value,
+                    origen: 'web' // Identifica que somos el Ingeniero
+                }) 
             });
             const d = await res.json();
             box.classList.remove('d-none');
             txt.innerText = d.consejo;
-        } catch (e) { alert("Error al consultar IA"); } 
-        finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-magic me-2"></i>PREGUNTAR'; }
+        } catch (e) { alert("Error IA"); } 
+        finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-magic me-2"></i>ANALIZAR'; }
     }
 </script>
 </body>
 </html>
+```
+
+### Nota Importante para Android (`MainActivity.kt`):
+Para completar la diferenciación, recuerda que en tu código de Android (función `consultarAgronomoIA`), debes cambiar ligeramente el JSON que envías para indicar que eres el "movil":
+
+```kotlin
+// Snippet para Android (MainActivity.kt)
+val json = JsonObject()
+json.addProperty("pregunta", pregunta)
+json.addProperty("origen", "movil") // <--- AGREGAR ESTA LINEA
