@@ -11,10 +11,8 @@ from werkzeug.serving import WSGIRequestHandler
 # Clase para filtrar logs de la terminal y ocultar el ruido de socket.io
 class FiltroLogs(WSGIRequestHandler):
     def log_request(self, code='-', size='-'):
-        # Si la ruta es de socket.io, la ignoramos completamente (no se imprime)
         if 'socket.io' in self.path:
             return
-        # Si NO es socket.io, imprimimos normal
         super().log_request(code, size)
 
 # Configuracion de red y base de datos
@@ -74,7 +72,7 @@ def consultar_deepseek(t, h, l, pregunta_usuario=None):
         "Content-Type": "application/json"
     }
 
-    # Mantenemos el limite de 400 tokens
+    # Volvemos al modelo V3 estandar (deepseek-chat) manteniendo el limite de tokens
     payload = {
         "model": "deepseek/deepseek-chat",
         "messages": [
@@ -86,7 +84,7 @@ def consultar_deepseek(t, h, l, pregunta_usuario=None):
     }
 
     try:
-        print(f"Consultando IA (Modo: {'Chat' if pregunta_usuario else 'Reporte'})...")
+        print(f"Consultando IA (Modelo: V3 Standard | Modo: {'Chat' if pregunta_usuario else 'Reporte'})...")
         response = requests.post(URL_API_IA, headers=headers, json=payload, timeout=20)
 
         if response.status_code == 200:
