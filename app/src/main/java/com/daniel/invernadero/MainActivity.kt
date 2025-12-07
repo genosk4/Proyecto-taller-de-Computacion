@@ -1,4 +1,4 @@
-package com.daniel.invernadero 
+package com.daniel.invernadero
 
 import android.os.Bundle
 import android.view.View
@@ -17,63 +17,64 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Query
 
-// --- INTERFAZ API CON CHATBOT ---
+// --- INTERFAZ DE CONEXIÓN CON EL SERVIDOR ---
 interface ApiService {
+    // 1. Obtener datos de sensores (con truco anti-caché)
     @GET("/api/historial")
     suspend fun obtenerHistorial(@Query("z") aleatorio: Long): List<JsonObject>
 
+    // 2. Enviar reporte manual (Bitácora)
     @POST("/api/movil/data")
     suspend fun enviarReporte(@Body datos: JsonObject): JsonObject
 
-    // Nueva ruta para la IA
+    // 3. Consultar al Cerebro IA
     @POST("/api/ia/consultar")
     suspend fun consultarIA(@Body datos: JsonObject): JsonObject
 }
 
 class MainActivity : AppCompatActivity() {
 
-    // TU IP DE AWS
-    private val BASE_URL = "http://IP_elastica:5000/"
+    private val BASE_URL = "http://3.210.134.165:5000/" 
 
     private lateinit var api: ApiService
-
-    // UI Elements
+    
+    // Elementos de la Pantalla
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var tvTempVal: TextView
     private lateinit var tvHumVal: TextView
     private lateinit var tvLuxVal: TextView
-
-    // Sección IA
+    
+    // Sección IA (Chatbot)
     private lateinit var etPreguntaIA: TextInputEditText
     private lateinit var btnConsultarIA: Button
     private lateinit var tvRespuestaIA: TextView
 
-    // Sección Reporte
+    // Sección Bitácora (Reporte)
     private lateinit var etMensaje: TextInputEditText
     private lateinit var btnEnviar: Button
 
-    // Auto-Update
+    // Control de actualización automática
     private var jobActualizacion: Job? = null
-    private val INTERVALO_UPDATE = 5000L
+    private val INTERVALO_UPDATE = 5000L // 5 segundos
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Vincular Vistas
+        // 1. Vincular variables con el diseño XML
         swipeRefresh = findViewById(R.id.swipeRefresh)
         tvTempVal = findViewById(R.id.tvTempVal)
         tvHumVal = findViewById(R.id.tvHumVal)
         tvLuxVal = findViewById(R.id.tvLuxVal)
-
+        
         etPreguntaIA = findViewById(R.id.etPreguntaIA)
         btnConsultarIA = findViewById(R.id.btnConsultarIA)
         tvRespuestaIA = findViewById(R.id.tvRespuestaIA)
-
+        
         etMensaje = findViewById(R.id.etMensaje)
         btnEnviar = findViewById(R.id.btnEnviar)
 
-        // Configurar Retrofit
+        // 2. Configurar conexión Retrofit
         try {
             val retrofit = Retrofit.Builder()
                 .baseUrl(BASE_URL)
@@ -81,51 +82,55 @@ class MainActivity : AppCompatActivity() {
                 .build()
             api = retrofit.create(ApiService::class.java)
         } catch (e: Exception) {
-            Toast.makeText(this, "Error URL", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Error Configuración URL", Toast.LENGTH_LONG).show()
         }
 
-        // Listeners
+        // 3. Configurar Botones
         swipeRefresh.setOnRefreshListener { cargarDatosUnaVez() }
+        
         btnEnviar.setOnClickListener { enviarReporteManual() }
-
-        // --- NUEVO LISTENER BOTÓN IA ---
-        btnConsultarIA.setOnClickListener {
+        
+        btnConsultarIA.setOnClickListener { 
             val pregunta = etPreguntaIA.text.toString()
-            consultarAgronomoIA(pregunta)
+            consultarCapatazIA(pregunta) 
         }
     }
 
+    // --- CICLO DE VIDA (Ahorro de batería) ---
     override fun onResume() {
         super.onResume()
-        startAutoUpdate()
+        startAutoUpdate() // Empezar a descargar datos al abrir
     }
 
     override fun onPause() {
         super.onPause()
-        stopAutoUpdate()
+        stopAutoUpdate() // Parar descargas al salir
     }
 
-    // --- LÓGICA CHATBOT IA ---
-    private fun consultarAgronomoIA(pregunta: String) {
-        // Bloquear UI para evitar doble click
+    // --- LÓGICA 1: INTELIGENCIA ARTIFICIAL (ROL CAPATAZ) ---
+    private fun consultarCapatazIA(pregunta: String) {
+        // Bloquear botón para evitar doble clic
         btnConsultarIA.isEnabled = false
-        btnConsultarIA.text = "ANALIZANDO..."
+        btnConsultarIA.text = "CONSULTANDO..."
         tvRespuestaIA.visibility = View.GONE
-
+        
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // Crear JSON {"pregunta": "..."}
+                // Preparamos el paquete para el servidor
                 val json = JsonObject()
-                json.addProperty("pregunta", pregunta) // Si va vacío, el servidor dará reporte general
+                json.addProperty("pregunta", pregunta)
+                
+                // 🔥 LA CLAVE: Nos identificamos como 'movil' para recibir respuestas cortas
+                json.addProperty("origen", "movil") 
 
                 val respuesta = api.consultarIA(json)
-
+                
                 withContext(Dispatchers.Main) {
                     if (respuesta.has("consejo")) {
                         tvRespuestaIA.text = "🤖 " + respuesta.get("consejo").asString
                         tvRespuestaIA.visibility = View.VISIBLE
                     } else {
-                        Toast.makeText(applicationContext, "Sin respuesta de IA", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(applicationContext, "Sin respuesta", Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
@@ -141,7 +146,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // --- LÓGICA DE ACTUALIZACIÓN SENSORES ---
+    // --- LÓGICA 2: SENSORES EN TIEMPO REAL ---
     private fun startAutoUpdate() {
         jobActualizacion?.cancel()
         jobActualizacion = CoroutineScope(Dispatchers.IO).launch {
@@ -151,18 +156,21 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
+    
     private fun stopAutoUpdate() {
         jobActualizacion?.cancel()
     }
 
     private suspend fun cargarDatosBackground() {
         try {
+            // Usamos System.currentTimeMillis() para romper el caché
             val historial = api.obtenerHistorial(System.currentTimeMillis())
             withContext(Dispatchers.Main) {
                 if (historial.isNotEmpty()) actualizarUI(historial[0])
             }
-        } catch (e: Exception) { }
+        } catch (e: Exception) { 
+            // Fallo silencioso en background
+        }
     }
 
     private fun cargarDatosUnaVez() {
@@ -173,9 +181,13 @@ class MainActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     if (historial.isNotEmpty()) actualizarUI(historial[0])
                     swipeRefresh.isRefreshing = false
+                    Toast.makeText(applicationContext, "Datos actualizados", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) { swipeRefresh.isRefreshing = false }
+                withContext(Dispatchers.Main) { 
+                    swipeRefresh.isRefreshing = false 
+                    Toast.makeText(applicationContext, "Error conexión", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -190,22 +202,31 @@ class MainActivity : AppCompatActivity() {
         tvLuxVal.text = "$l Lx"
     }
 
+    // --- LÓGICA 3: BITÁCORA MANUAL ---
     private fun enviarReporteManual() {
         val mensaje = etMensaje.text.toString()
-        if (mensaje.isEmpty()) return
+        if (mensaje.isEmpty()) {
+            Toast.makeText(this, "Escribe una observación", Toast.LENGTH_SHORT).show()
+            return
+        }
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val json = JsonObject()
-                json.addProperty("tipo", "reporte_manual")
                 json.addProperty("observacion", mensaje)
-                json.addProperty("usuario", "Android")
+                json.addProperty("usuario", "Android Operario") // Identidad del reporte
+                
                 api.enviarReporte(json)
+                
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(applicationContext, "Reporte Enviado", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(applicationContext, "Bitácora guardada ✅", Toast.LENGTH_SHORT).show()
                     etMensaje.text?.clear()
                 }
-            } catch (e: Exception) { }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(applicationContext, "Fallo envío", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 }
